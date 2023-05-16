@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -27,8 +28,21 @@ func New(logger *log.Logger, version, env string) *Handler {
 }
 
 func (h *Handler) CreateMovie() func(c *gin.Context) {
+	var input struct {
+		Title   string   `json:"title"`
+		Year    int32    `json:"year"`
+		Runtime int32    `json:"runtime"`
+		Genres  []string `json:"genres"`
+	}
+
 	return func(c *gin.Context) {
-		fmt.Fprintln(c.Writer, "create a new movie")
+		err := json.NewDecoder(c.Request.Body).Decode(&input)
+		if err != nil {
+			httphelpers.StatusBadRequestResponse(c, err.Error())
+			return
+		}
+
+		fmt.Fprintf(c.Writer, "%+v\n", input)
 	}
 }
 
