@@ -11,6 +11,8 @@ import (
 
 const maxBytes int64 = 1_048_576
 
+type Envelope map[string]any
+
 func JSONDecode(c *gin.Context, v any) error {
 	return jsonDecode(c, v, true)
 }
@@ -39,8 +41,8 @@ func jsonDecode(c *gin.Context, v any, allowUnknownFields bool) error {
 	return nil
 }
 
-func WriteJSON(c *gin.Context, status int, data any, headers http.Header) error {
-	js, err := json.Marshal(data)
+func WriteJSON(c *gin.Context, status int, data Envelope, headers http.Header) error {
+	js, err := json.MarshalIndent(data, "", "\t")
 	if err != nil {
 		return err
 	}

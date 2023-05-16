@@ -49,7 +49,7 @@ func (h *Handler) ShowMovie() func(c *gin.Context) {
 			Version:   1,
 		}
 
-		err = httphelpers.WriteJSON(c, http.StatusOK, movie, nil)
+		err = httphelpers.WriteJSON(c, http.StatusOK, httphelpers.Envelope{"movie": movie}, nil)
 		if err != nil {
 			h.Logger.Print(err)
 			http.Error(c.Writer, "The server encountered a problem and could not process your request", http.StatusInternalServerError)

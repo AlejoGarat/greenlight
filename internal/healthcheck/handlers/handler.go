@@ -22,7 +22,7 @@ func (h *Handler) Healthcheck(c *gin.Context) {
 		"version":     h.Version,
 	}
 
-	err := httphelpers.WriteJSON(c, http.StatusOK, data, nil)
+	err := httphelpers.WriteJSON(c, http.StatusOK, httphelpers.Envelope{"data": data}, nil)
 	if err != nil {
 		h.Logger.Println(err)
 		http.Error(c.Writer, "The server encountered a problem and could not process your request", http.StatusInternalServerError)
