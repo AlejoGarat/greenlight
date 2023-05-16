@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"time"
 
+	commonmodels "greenlight/internal/models"
 	models "greenlight/internal/movies/models"
 	"greenlight/pkg/httphelpers"
+	"greenlight/pkg/validator"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,6 +18,12 @@ type Handler struct {
 	Logger  *log.Logger
 	Version string
 	Env     string
+}
+type movieInput struct {
+	Title   string               `json:"title"`
+	Year    int32                `json:"year"`
+	Runtime commonmodels.Runtime `json:"runtime"`
+	Genres  []string             `json:"genres"`
 }
 
 func New(logger *log.Logger, version, env string) *Handler {
@@ -27,21 +35,38 @@ func New(logger *log.Logger, version, env string) *Handler {
 }
 
 func (h *Handler) CreateMovie() func(c *gin.Context) {
-	var input struct {
-		Title   string   `json:"title"`
-		Year    int32    `json:"year"`
-		Runtime int32    `json:"runtime"`
-		Genres  []string `json:"genres"`
-	}
-
 	return func(c *gin.Context) {
-		err := httphelpers.ReadJSON(c, &input)
+		var movie movieInput
+
+		err := httphelpers.ReadJSON(c, &movie)
 		if err != nil {
 			httphelpers.StatusBadRequestResponse(c, err.Error())
 			return
 		}
 
-		fmt.Fprintf(c.Writer, "%+v\n", input)
+		v := validator.New()
+		validateFields(c, v, movie)
+
+		fmt.Fprintf(c.Writer, "%+v\n", movie)
+	}
+}
+
+func validateFields(c *gin.Context, v *validator.Validator, input movieInput) {
+	v.Check(input.Title != "", "title", "must be provided")
+	v.Check(len(input.Title) <= 500, "title", "must not be more than 500 bytes long")
+	v.Check(input.Year != 0, "year", "must be provided")
+	v.Check(input.Year >= 1888, "year", "must be greater than 1888")
+	v.Check(input.Year <= int32(time.Now().Year()), "year", "must not be in the future")
+	v.Check(input.Runtime != 0, "runtime", "must be provided")
+	v.Check(input.Runtime > 0, "runtime", "must be a positive integer")
+	v.Check(input.Genres != nil, "genres", "must be provided")
+	v.Check(len(input.Genres) >= 1, "genres", "must contain at least 1 genre")
+	v.Check(len(input.Genres) <= 5, "genres", "must not contain more than 5 genres")
+	v.Check(validator.Unique(input.Genres), "genres", "must not contain duplicate values")
+
+	if !v.Valid() {
+		httphelpers.StatusUnprocesableEntities(c, v.Errors)
+		return
 	}
 }
 
