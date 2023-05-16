@@ -11,18 +11,10 @@ import (
 
 const maxBytes int64 = 1_048_576
 
-// JSONDecode will try to decode json into pointer v. In case of unknown fields, they will be ignored
-//
-// If you do not wish to handle the error and are fine with 400 response on error
-// feel free to use c.BindJSON(v)
 func JSONDecode(c *gin.Context, v any) error {
 	return jsonDecode(c, v, true)
 }
 
-// JSONDecode will try to decode json into pointer v. In case of unknown fields, an error will be returned
-//
-// If you do not wish to handle the error and are fine with 400 response on error
-// feel free to use c.BindJSON(v)
 func JSONDecodeNoUnknownFieldsAllowed(c *gin.Context, v any) error {
 	return jsonDecode(c, v, false)
 }
@@ -43,6 +35,25 @@ func jsonDecode(c *gin.Context, v any, allowUnknownFields bool) error {
 		err = errors.New("body must only contain a single JSON value")
 		return err
 	}
+
+	return nil
+}
+
+func WriteJSON(c *gin.Context, status int, data any, headers http.Header) error {
+	js, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	js = append(js, '\n')
+
+	for key, value := range headers {
+		c.Writer.Header()[key] = value
+	}
+
+	c.Writer.Header().Set("Content-Type", "application/json")
+	c.Writer.WriteHeader(status)
+	c.Writer.Write(js)
 
 	return nil
 }

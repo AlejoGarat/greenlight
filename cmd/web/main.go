@@ -50,11 +50,13 @@ func main() {
 	healthcheckHandler := &healthcheckHandler.Handler{
 		Logger:  logger,
 		Version: version,
+		Env:     "development",
 	}
 
 	moviesHandler := &moviesHandler.Handler{
 		Logger:  logger,
 		Version: version,
+		Env:     "development",
 	}
 
 	v1 := r.Group("/v1")

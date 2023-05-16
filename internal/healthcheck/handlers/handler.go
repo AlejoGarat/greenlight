@@ -1,8 +1,10 @@
 package handlers
 
 import (
-	"fmt"
 	"log"
+	"net/http"
+
+	"greenlight/pkg/httphelpers"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,9 +16,15 @@ type Handler struct {
 }
 
 func (h *Handler) Healthcheck(c *gin.Context) {
-	js := `{"status": "available", "environment": %q, "version": %q}`
-	js = fmt.Sprintf(js, h.Env, h.Version)
+	data := map[string]string{
+		"status":      "available",
+		"environment": h.Env,
+		"version":     h.Version,
+	}
 
-	c.Writer.Header().Set("Content-Type", "application/json")
-	c.Writer.Write([]byte(js))
+	err := httphelpers.WriteJSON(c, http.StatusOK, data, nil)
+	if err != nil {
+		h.Logger.Println(err)
+		http.Error(c.Writer, "The server encountered a problem and could not process your request", http.StatusInternalServerError)
+	}
 }
