@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
+	models "greenlight/internal/movies/models"
 	"greenlight/pkg/httphelpers"
 
 	"github.com/gin-gonic/gin"
@@ -38,6 +40,19 @@ func (h *Handler) ShowMovie() func(c *gin.Context) {
 			return
 		}
 
-		fmt.Fprintf(c.Writer, "show the details of movie %d\n", id)
+		movie := models.Movie{
+			ID:        id,
+			CreatedAt: time.Now(),
+			Title:     "Casablanca",
+			Runtime:   102,
+			Genres:    []string{"drama", "romance", "war"},
+			Version:   1,
+		}
+
+		err = httphelpers.WriteJSON(c, http.StatusOK, movie, nil)
+		if err != nil {
+			h.Logger.Print(err)
+			http.Error(c.Writer, "The server encountered a problem and could not process your request", http.StatusInternalServerError)
+		}
 	}
 }
