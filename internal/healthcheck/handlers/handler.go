@@ -14,7 +14,9 @@ type Handler struct {
 }
 
 func (h *Handler) Healthcheck(c *gin.Context) {
-	fmt.Fprintln(c.Writer, "status: available")
-	fmt.Fprintf(c.Writer, "environment: %s\n", h.Env)
-	fmt.Fprintf(c.Writer, "version: %s\n", h.Version)
+	js := `{"status": "available", "environment": %q, "version": %q}`
+	js = fmt.Sprintf(js, h.Env, h.Version)
+
+	c.Writer.Header().Set("Content-Type", "application/json")
+	c.Writer.Write([]byte(js))
 }
