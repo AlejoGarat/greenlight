@@ -16,15 +16,16 @@ type Handler struct {
 }
 
 func (h *Handler) Healthcheck(c *gin.Context) {
-	data := map[string]string{
-		"status":      "available",
-		"environment": h.Env,
-		"version":     h.Version,
+	data := gin.H{
+		"status": "available",
+		"system_info": map[string]string{
+			"environment": h.Env,
+			"version":     h.Version,
+		},
 	}
 
-	err := httphelpers.WriteJSON(c, http.StatusOK, httphelpers.Envelope{"data": data}, nil)
+	err := httphelpers.WriteJSON(c, http.StatusOK, data, nil)
 	if err != nil {
-		h.Logger.Println(err)
-		http.Error(c.Writer, "The server encountered a problem and could not process your request", http.StatusInternalServerError)
+		httphelpers.StatusInternalServerErrorResponse(c, err)
 	}
 }

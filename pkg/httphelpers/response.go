@@ -115,6 +115,10 @@ func StatusForbiddenJSONPayloadResponse(c *gin.Context, payload any) error {
 	return CustomStatusJSONPayloadResponse(c, http.StatusForbidden, payload)
 }
 
+func StatusMethodNotAllowedResponse(c *gin.Context) {
+	c.JSON(http.StatusForbidden, gin.H{"error": "not allowed"})
+}
+
 // StatusNotFoundResponse is a shorthand for CustomStatusPayloadResponse with status 404
 // If you do not wish to handle the error, and are ok with a 400 response on error, feel free to use c.JSON(http.StatusNotFound, payload)
 func StatusNotFoundPayloadResponse(c *gin.Context, payload any) {

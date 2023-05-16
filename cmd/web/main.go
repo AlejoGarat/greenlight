@@ -13,6 +13,7 @@ import (
 	healthcheckRoutes "greenlight/internal/healthcheck/routes"
 	moviesHandler "greenlight/internal/movies/handlers"
 	moviesRoutes "greenlight/internal/movies/routes"
+	"greenlight/pkg/httphelpers"
 )
 
 const version = "1.0.0"
@@ -46,6 +47,8 @@ func main() {
 	// helloWorldHandler := handlers.NewHelloWorldHandler(helloWorldLogic)
 
 	r := gin.Default()
+	r.NoRoute(gin.HandlerFunc(httphelpers.StatusNotFoundResponse))
+	r.NoMethod(gin.HandlerFunc(httphelpers.StatusMethodNotAllowedResponse))
 
 	healthcheckHandler := &healthcheckHandler.Handler{
 		Logger:  logger,

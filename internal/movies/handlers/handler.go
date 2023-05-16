@@ -36,7 +36,7 @@ func (h *Handler) ShowMovie() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		id, err := httphelpers.ReadIDParam(c)
 		if err != nil {
-			http.NotFound(c.Writer, c.Request)
+			httphelpers.StatusNotFoundResponse(c)
 			return
 		}
 
@@ -49,10 +49,13 @@ func (h *Handler) ShowMovie() func(c *gin.Context) {
 			Version:   1,
 		}
 
-		err = httphelpers.WriteJSON(c, http.StatusOK, httphelpers.Envelope{"movie": movie}, nil)
+		data := gin.H{
+			"movie": movie,
+		}
+
+		err = httphelpers.WriteJSON(c, http.StatusOK, data, nil)
 		if err != nil {
-			h.Logger.Print(err)
-			http.Error(c.Writer, "The server encountered a problem and could not process your request", http.StatusInternalServerError)
+			httphelpers.StatusInternalServerErrorResponse(c, err)
 		}
 	}
 }
