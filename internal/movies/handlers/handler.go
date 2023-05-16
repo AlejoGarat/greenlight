@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -36,7 +35,7 @@ func (h *Handler) CreateMovie() func(c *gin.Context) {
 	}
 
 	return func(c *gin.Context) {
-		err := json.NewDecoder(c.Request.Body).Decode(&input)
+		err := httphelpers.ReadJSON(c, &input)
 		if err != nil {
 			httphelpers.StatusBadRequestResponse(c, err.Error())
 			return
