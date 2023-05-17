@@ -47,18 +47,6 @@ func main() {
 
 	var err error
 
-	// dsn := "user=foo password=bar dbname=foobar host=localhost port=5432 sslmode=disable"
-
-	// db, err := sqlx.Connect("postgres", dsn)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// helloWorldRepo := repo.NewSqlxRepo(db)
-	// helloWorldRepo := repo.NewSqlxRepo(nil)
-	// helloWorldLogic := logic.NewHelloWorldLogic(helloWorldRepo)
-	// helloWorldHandler := handlers.NewHelloWorldHandler(helloWorldLogic)
-
 	db, err := openDB(cfg)
 	if err != nil {
 		logger.Fatal(err)
@@ -109,7 +97,6 @@ func openDB(cfg config) (*sql.DB, error) {
 		return nil, err
 	}
 
-	// Set the maximum idle timeout.
 	db.SetConnMaxIdleTime(duration)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

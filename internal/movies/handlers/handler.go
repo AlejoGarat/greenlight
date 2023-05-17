@@ -26,6 +26,13 @@ type movieInput struct {
 	Genres  []string             `json:"genres"`
 }
 
+type MovieService interface {
+	AddMovie(movie *models.Movie) error
+	GetMovie(id int64) (*models.Movie, error)
+	UpdateMovie(movie *models.Movie) error
+	DeleteMovie(id int64) error
+}
+
 func New(logger *log.Logger, version, env string) *Handler {
 	return &Handler{
 		Logger:  logger,
