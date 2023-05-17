@@ -32,10 +32,10 @@ func (m movieService) AddMovie(movie *models.Movie) error {
 func (m movieService) GetMovie(id int64) (*models.Movie, error) {
 	movie, err := m.repo.Get(id)
 	if err != nil {
-		return movie, err
+		return nil, err
 	}
 
-	return nil, nil
+	return movie, nil
 }
 
 func (m movieService) UpdateMovie(movie *models.Movie) error {

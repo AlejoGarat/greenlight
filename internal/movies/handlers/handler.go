@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -8,6 +9,7 @@ import (
 
 	commonmodels "greenlight/internal/models"
 	models "greenlight/internal/movies/models"
+	"greenlight/internal/repoerrors"
 	"greenlight/pkg/httphelpers"
 	"greenlight/pkg/validator"
 
@@ -68,7 +70,6 @@ func (h *Handler) CreateMovie() func(c *gin.Context) {
 
 		err = h.MovieService.AddMovie(movie)
 		if err != nil {
-			log.Println("pepe")
 			httphelpers.StatusInternalServerErrorResponse(c, err)
 			return
 		}
@@ -107,20 +108,18 @@ func (h *Handler) ShowMovie() func(c *gin.Context) {
 			return
 		}
 
-		movie := models.Movie{
-			ID:        id,
-			CreatedAt: time.Now(),
-			Title:     "Casablanca",
-			Runtime:   102,
-			Genres:    []string{"drama", "romance", "war"},
-			Version:   1,
+		movie, err := h.MovieService.GetMovie(id)
+		if err != nil {
+			switch {
+			case errors.Is(err, repoerrors.ErrRecordNotFound):
+				httphelpers.StatusNotFoundResponse(c)
+			default:
+				httphelpers.StatusInternalServerErrorResponse(c, err)
+			}
+			return
 		}
 
-		data := gin.H{
-			"movie": movie,
-		}
-
-		err = httphelpers.WriteJSON(c, http.StatusOK, data, nil)
+		err = httphelpers.WriteJSON(c, http.StatusOK, gin.H{"movie": movie}, nil)
 		if err != nil {
 			httphelpers.StatusInternalServerErrorResponse(c, err)
 		}

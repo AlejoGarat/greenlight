@@ -1,3 +1,7 @@
 package repoerrors
 
-var ErrRecordNotFound = "record not found"
+import (
+	"errors"
+)
+
+var ErrRecordNotFound = errors.New("record not found")
