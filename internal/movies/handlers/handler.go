@@ -125,3 +125,59 @@ func (h *Handler) ShowMovie() func(c *gin.Context) {
 		}
 	}
 }
+
+func (h *Handler) UpdateMovie() func(c *gin.Context) {
+	return func(c *gin.Context) {
+		id, err := httphelpers.ReadIDParam(c)
+		if err != nil {
+			httphelpers.StatusNotFoundResponse(c)
+			return
+		}
+
+		movie, err := h.MovieService.GetMovie(id)
+		if err != nil {
+			switch {
+			case errors.Is(err, repoerrors.ErrRecordNotFound):
+				httphelpers.StatusNotFoundResponse(c)
+			default:
+				httphelpers.StatusInternalServerErrorResponse(c, err)
+			}
+			return
+		}
+
+		var input movieInput
+		err = httphelpers.ReadJSON(c, &input)
+		if err != nil {
+			httphelpers.StatusBadRequestResponse(c, err.Error())
+			return
+		}
+
+		movie.Title = input.Title
+		movie.Year = input.Year
+		movie.Runtime = input.Runtime
+		movie.Genres = input.Genres
+
+		v := validator.New()
+		valid := fieldsAreValid(c, v, movie)
+		if !valid {
+			httphelpers.StatusUnprocesableEntities(c, v.Errors)
+			return
+		}
+
+		err = h.MovieService.UpdateMovie(movie)
+		if err != nil {
+			httphelpers.StatusInternalServerErrorResponse(c, err)
+			return
+		}
+
+		err = httphelpers.WriteJSON(c, http.StatusOK, gin.H{"movie": movie}, nil)
+		if err != nil {
+			httphelpers.StatusInternalServerErrorResponse(c, err)
+		}
+	}
+}
+
+func (h *Handler) DeleteMovie() func(c *gin.Context) {
+	return func(c *gin.Context) {
+	}
+}
