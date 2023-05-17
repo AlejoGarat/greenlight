@@ -15,7 +15,9 @@ import (
 	healthcheckHandler "greenlight/internal/healthcheck/handlers"
 	healthcheckRoutes "greenlight/internal/healthcheck/routes"
 	moviesHandler "greenlight/internal/movies/handlers"
+	moviesRepo "greenlight/internal/movies/repository"
 	moviesRoutes "greenlight/internal/movies/routes"
+	moviesService "greenlight/internal/movies/service"
 	"greenlight/pkg/httphelpers"
 )
 
@@ -63,10 +65,14 @@ func main() {
 		Env:     "development",
 	}
 
+	mr := moviesRepo.NewMovieRepo(db)
+	ms := moviesService.NewMovieService(mr)
+
 	moviesHandler := &moviesHandler.Handler{
-		Logger:  logger,
-		Version: version,
-		Env:     "development",
+		Logger:       logger,
+		Version:      version,
+		Env:          "development",
+		MovieService: ms,
 	}
 
 	v1 := r.Group("/v1")
