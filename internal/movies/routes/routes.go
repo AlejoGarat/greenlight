@@ -11,9 +11,11 @@ type Handler interface {
 	CreateMovie() func(c *gin.Context)
 	UpdateMovie() func(c *gin.Context)
 	DeleteMovie() func(c *gin.Context)
+	ListMovies() func(c *gin.Context)
 }
 
 func MakeRoutes(engine *gin.RouterGroup, handler *handlers.Handler) {
+	engine.GET("movies", handler.ListMovies())
 	engine.GET("movies/:id", handler.ShowMovie())
 	engine.POST("movies", handler.CreateMovie())
 	engine.PATCH("movies/:id", handler.UpdateMovie())

@@ -231,3 +231,30 @@ func (h *Handler) DeleteMovie() func(c *gin.Context) {
 		}
 	}
 }
+
+func (h *Handler) ListMovies() func(c *gin.Context) {
+	return func(c *gin.Context) {
+		var input struct {
+			Title  string
+			Genres []string
+			commonmodels.Filters
+		}
+
+		v := validator.New()
+
+		qs := c.Request.URL.Query()
+
+		input.Title = httphelpers.ReadString(qs, "title", "")
+		input.Genres = httphelpers.ReadCSV(qs, "genres", []string{})
+		input.Filters.Page = httphelpers.ReadInt(qs, "page", 1, v)
+		input.Filters.PageSize = httphelpers.ReadInt(qs, "page_size", 20, v)
+		input.Filters.Sort = httphelpers.ReadString(qs, "sort", "id")
+
+		if !v.Valid() {
+			httphelpers.StatusBadRequestJSONPayloadResponse(c, v.Errors)
+			return
+		}
+
+		fmt.Fprintf(c.Writer, "%+v\n", input)
+	}
+}
