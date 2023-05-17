@@ -179,5 +179,26 @@ func (h *Handler) UpdateMovie() func(c *gin.Context) {
 
 func (h *Handler) DeleteMovie() func(c *gin.Context) {
 	return func(c *gin.Context) {
+		id, err := httphelpers.ReadIDParam(c)
+		if err != nil {
+			httphelpers.StatusNotFoundResponse(c)
+			return
+		}
+
+		err = h.MovieService.DeleteMovie(id)
+		if err != nil {
+			switch {
+			case errors.Is(err, repoerrors.ErrRecordNotFound):
+				httphelpers.StatusNotFoundResponse(c)
+			default:
+				httphelpers.StatusInternalServerErrorResponse(c, err)
+			}
+			return
+		}
+
+		err = httphelpers.WriteJSON(c, http.StatusOK, gin.H{"message": "movie succesfully deleted"}, nil)
+		if err != nil {
+			httphelpers.StatusInternalServerErrorResponse(c, err)
+		}
 	}
 }
