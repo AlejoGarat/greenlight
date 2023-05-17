@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"flag"
 	"log"
 	"os"
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 
 	"github.com/gin-gonic/gin"
@@ -90,8 +90,8 @@ func main() {
 	}
 }
 
-func openDB(cfg config) (*sql.DB, error) {
-	db, err := sql.Open("postgres", cfg.db.dsn)
+func openDB(cfg config) (*sqlx.DB, error) {
+	db, err := sqlx.Open("postgres", cfg.db.dsn)
 	if err != nil {
 		return nil, err
 	}

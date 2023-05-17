@@ -1,6 +1,8 @@
 package service
 
 import (
+	"context"
+
 	models "greenlight/internal/movies/models"
 )
 
@@ -8,10 +10,10 @@ type movieService struct {
 	repo MovieRepo
 }
 type MovieRepo interface {
-	Insert(movie *models.Movie) error
-	Get(id int64) (*models.Movie, error)
-	Update(movie *models.Movie) error
-	Delete(id int64) error
+	Insert(ctx context.Context, movie models.Movie) (models.Movie, error)
+	Get(ctx context.Context, id int64) (models.Movie, error)
+	Update(ctx context.Context, movie models.Movie) (models.Movie, error)
+	Delete(ctx context.Context, id int64) error
 }
 
 func NewMovieService(repo MovieRepo) *movieService {
@@ -20,8 +22,8 @@ func NewMovieService(repo MovieRepo) *movieService {
 	}
 }
 
-func (m movieService) AddMovie(movie *models.Movie) error {
-	err := m.repo.Insert(movie)
+func (m movieService) AddMovie(ctx context.Context, movie models.Movie) error {
+	_, err := m.repo.Insert(ctx, movie)
 	if err != nil {
 		return err
 	}
@@ -29,17 +31,17 @@ func (m movieService) AddMovie(movie *models.Movie) error {
 	return nil
 }
 
-func (m movieService) GetMovie(id int64) (*models.Movie, error) {
-	movie, err := m.repo.Get(id)
+func (m movieService) GetMovie(ctx context.Context, id int64) (models.Movie, error) {
+	movie, err := m.repo.Get(ctx, id)
 	if err != nil {
-		return nil, err
+		return models.Movie{}, err
 	}
 
 	return movie, nil
 }
 
-func (m movieService) UpdateMovie(movie *models.Movie) error {
-	err := m.repo.Update(movie)
+func (m movieService) UpdateMovie(ctx context.Context, movie models.Movie) error {
+	_, err := m.repo.Update(ctx, movie)
 	if err != nil {
 		return err
 	}
@@ -47,8 +49,8 @@ func (m movieService) UpdateMovie(movie *models.Movie) error {
 	return nil
 }
 
-func (m movieService) DeleteMovie(id int64) error {
-	err := m.repo.Delete(id)
+func (m movieService) DeleteMovie(ctx context.Context, id int64) error {
+	err := m.repo.Delete(ctx, id)
 	if err != nil {
 		return err
 	}

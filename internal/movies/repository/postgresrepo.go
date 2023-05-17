@@ -9,35 +9,40 @@ import (
 	models "greenlight/internal/movies/models"
 	"greenlight/internal/repoerrors"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 )
 
 type movieRepo struct {
-	DB *sql.DB
+	DB *sqlx.DB
 }
 
-func NewMovieRepo(db *sql.DB) *movieRepo {
+func NewMovieRepo(db *sqlx.DB) *movieRepo {
 	return &movieRepo{
 		DB: db,
 	}
 }
 
-func (m movieRepo) Insert(movie *models.Movie) error {
+func (m movieRepo) Insert(ctx context.Context, movie models.Movie) (models.Movie, error) {
 	query := `INSERT INTO movies (title, year, runtime, genres)
 			  VALUES ($1, $2, $3, $4)
 			  RETURNING id, created_at, version`
 
 	args := []any{movie.Title, movie.Year, movie.Runtime, pq.Array(movie.Genres)}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
-	return m.DB.QueryRowContext(ctx, query, args...).Scan(&movie.ID, &movie.CreatedAt, &movie.Version)
+	err := m.DB.GetContext(ctx, &movie, query, args...)
+	if err != nil {
+		return models.Movie{}, err
+	}
+	return movie, nil
 }
 
-func (m movieRepo) Get(id int64) (*models.Movie, error) {
+func (m movieRepo) Get(ctx context.Context, id int64) (models.Movie, error) {
 	if id < 1 {
-		return nil, repoerrors.ErrRecordNotFound
+		return models.Movie{}, repoerrors.ErrRecordNotFound
 	}
 
 	query := `
@@ -50,28 +55,20 @@ func (m movieRepo) Get(id int64) (*models.Movie, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRowContext(ctx, query, id).Scan(
-		&movie.ID,
-		&movie.CreatedAt,
-		&movie.Title,
-		&movie.Year,
-		&movie.Runtime,
-		pq.Array(&movie.Genres),
-		&movie.Version,
-	)
+	err := m.DB.GetContext(ctx, &movie, query, id)
 	if err != nil {
 		switch {
-		case errors.Is(err, sql.ErrNoRows):
-			return nil, repoerrors.ErrRecordNotFound
+		case errors.Is(err, repoerrors.ErrNoRows):
+			return models.Movie{}, repoerrors.ErrRecordNotFound
 		default:
-			return nil, err
+			return models.Movie{}, err
 		}
 	}
 
-	return &movie, nil
+	return movie, nil
 }
 
-func (m movieRepo) Update(movie *models.Movie) error {
+func (m movieRepo) Update(ctx context.Context, movie models.Movie) (models.Movie, error) {
 	query := `
         UPDATE movies 
         SET title = $1, year = $2, runtime = $3, genres = $4, version = version + 1
@@ -90,20 +87,20 @@ func (m movieRepo) Update(movie *models.Movie) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&movie.Version)
+	err := m.DB.GetContext(ctx, &movie, query, args...)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			return repoerrors.ErrEditConflict
+			return models.Movie{}, repoerrors.ErrEditConflict
 		default:
-			return err
+			return models.Movie{}, err
 		}
 	}
 
-	return nil
+	return movie, nil
 }
 
-func (m movieRepo) Delete(id int64) error {
+func (m movieRepo) Delete(ctx context.Context, id int64) error {
 	if id < 1 {
 		return repoerrors.ErrRecordNotFound
 	}

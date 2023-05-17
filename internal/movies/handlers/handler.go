@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -37,10 +38,10 @@ type updateMovieInput struct {
 }
 
 type MovieService interface {
-	AddMovie(movie *models.Movie) error
-	GetMovie(id int64) (*models.Movie, error)
-	UpdateMovie(movie *models.Movie) error
-	DeleteMovie(id int64) error
+	AddMovie(ctx context.Context, movie models.Movie) error
+	GetMovie(ctx context.Context, id int64) (models.Movie, error)
+	UpdateMovie(ctx context.Context, movie models.Movie) error
+	DeleteMovie(ctx context.Context, id int64) error
 }
 
 func New(logger *log.Logger, version, env string) *Handler {
@@ -61,7 +62,7 @@ func (h *Handler) CreateMovie() func(c *gin.Context) {
 			return
 		}
 
-		movie := &models.Movie{
+		movie := models.Movie{
 			Title:   input.Title,
 			Year:    input.Year,
 			Runtime: input.Runtime,
@@ -75,7 +76,8 @@ func (h *Handler) CreateMovie() func(c *gin.Context) {
 			return
 		}
 
-		err = h.MovieService.AddMovie(movie)
+		ctx := c.Request.Context()
+		err = h.MovieService.AddMovie(ctx, movie)
 		if err != nil {
 			httphelpers.StatusInternalServerErrorResponse(c, err)
 			return
@@ -91,7 +93,7 @@ func (h *Handler) CreateMovie() func(c *gin.Context) {
 	}
 }
 
-func fieldsAreValid(c *gin.Context, v *validator.Validator, movie *models.Movie) bool {
+func fieldsAreValid(c *gin.Context, v *validator.Validator, movie models.Movie) bool {
 	v.Check(movie.Title != "", "title", "must be provided")
 	v.Check(len(movie.Title) <= 500, "title", "must not be more than 500 bytes long")
 	v.Check(movie.Year != 0, "year", "must be provided")
@@ -115,7 +117,8 @@ func (h *Handler) ShowMovie() func(c *gin.Context) {
 			return
 		}
 
-		movie, err := h.MovieService.GetMovie(id)
+		ctx := c.Request.Context()
+		movie, err := h.MovieService.GetMovie(ctx, id)
 		if err != nil {
 			switch {
 			case errors.Is(err, repoerrors.ErrRecordNotFound):
@@ -141,7 +144,8 @@ func (h *Handler) UpdateMovie() func(c *gin.Context) {
 			return
 		}
 
-		movie, err := h.MovieService.GetMovie(id)
+		ctx := c.Request.Context()
+		movie, err := h.MovieService.GetMovie(ctx, id)
 		if err != nil {
 			switch {
 			case errors.Is(err, repoerrors.ErrRecordNotFound):
@@ -182,7 +186,7 @@ func (h *Handler) UpdateMovie() func(c *gin.Context) {
 			return
 		}
 
-		err = h.MovieService.UpdateMovie(movie)
+		err = h.MovieService.UpdateMovie(ctx, movie)
 		if err != nil {
 			switch {
 			case errors.Is(err, repoerrors.ErrEditConflict):
@@ -209,7 +213,8 @@ func (h *Handler) DeleteMovie() func(c *gin.Context) {
 			return
 		}
 
-		err = h.MovieService.DeleteMovie(id)
+		ctx := c.Request.Context()
+		err = h.MovieService.DeleteMovie(ctx, id)
 		if err != nil {
 			switch {
 			case errors.Is(err, repoerrors.ErrRecordNotFound):
