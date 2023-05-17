@@ -22,11 +22,18 @@ type Handler struct {
 	Env          string
 	MovieService MovieService
 }
-type movieInput struct {
+type createMovieInput struct {
 	Title   string               `json:"title"`
 	Year    int32                `json:"year"`
 	Runtime commonmodels.Runtime `json:"runtime"`
 	Genres  []string             `json:"genres"`
+}
+
+type updateMovieInput struct {
+	Title   *string               `json:"title"`
+	Year    *int32                `json:"year"`
+	Runtime *commonmodels.Runtime `json:"runtime"`
+	Genres  []string              `json:"genres"`
 }
 
 type MovieService interface {
@@ -46,7 +53,7 @@ func New(logger *log.Logger, version, env string) *Handler {
 
 func (h *Handler) CreateMovie() func(c *gin.Context) {
 	return func(c *gin.Context) {
-		var input movieInput
+		var input createMovieInput
 
 		err := httphelpers.ReadJSON(c, &input)
 		if err != nil {
@@ -145,17 +152,28 @@ func (h *Handler) UpdateMovie() func(c *gin.Context) {
 			return
 		}
 
-		var input movieInput
+		var input updateMovieInput
 		err = httphelpers.ReadJSON(c, &input)
 		if err != nil {
 			httphelpers.StatusBadRequestResponse(c, err.Error())
 			return
 		}
 
-		movie.Title = input.Title
-		movie.Year = input.Year
-		movie.Runtime = input.Runtime
-		movie.Genres = input.Genres
+		if input.Title != nil {
+			movie.Title = *input.Title
+		}
+
+		if input.Year != nil {
+			movie.Year = *input.Year
+		}
+
+		if input.Runtime != nil {
+			movie.Runtime = *input.Runtime
+		}
+
+		if input.Genres != nil {
+			movie.Genres = input.Genres
+		}
 
 		v := validator.New()
 		valid := fieldsAreValid(c, v, movie)
