@@ -184,7 +184,13 @@ func (h *Handler) UpdateMovie() func(c *gin.Context) {
 
 		err = h.MovieService.UpdateMovie(movie)
 		if err != nil {
-			httphelpers.StatusInternalServerErrorResponse(c, err)
+			switch {
+			case errors.Is(err, repoerrors.ErrEditConflict):
+				httphelpers.StatusConflictResponse(c)
+			default:
+				httphelpers.StatusInternalServerErrorResponse(c, err)
+			}
+
 			return
 		}
 
