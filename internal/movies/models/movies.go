@@ -1,7 +1,6 @@
 package data
 
 import (
-	"database/sql/driver"
 	"time"
 
 	"greenlight/internal/models"
@@ -15,17 +14,6 @@ type Movie struct {
 	Title     string         `json:"title" db:"title"`
 	Year      int32          `json:"year" db:"year"`
 	Runtime   models.Runtime `json:"runtime" db:"runtime"`
-	Genres    pqStrSlice     `json:"genres" db:"genres"`
+	Genres    pq.StringArray `json:"genres" db:"genres"`
 	Version   int32          `json:"version" db:"version"`
-}
-
-type pqStrSlice []string
-
-func (p *pqStrSlice) Scan(src interface{}) error {
-	arr := pq.StringArray(*p)
-	return arr.Scan(src)
-}
-
-func (p pqStrSlice) Value() (driver.Value, error) {
-	return pq.Array(p).Value()
 }

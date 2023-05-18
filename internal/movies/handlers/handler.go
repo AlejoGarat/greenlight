@@ -40,6 +40,7 @@ type updateMovieInput struct {
 type MovieService interface {
 	AddMovie(ctx context.Context, movie models.Movie) (models.Movie, error)
 	GetMovie(ctx context.Context, id int64) (models.Movie, error)
+	GetMovies(ctx context.Context, title string, genres []string, filters commonmodels.Filters) ([]models.Movie, error)
 	UpdateMovie(ctx context.Context, movie models.Movie) (models.Movie, error)
 	DeleteMovie(ctx context.Context, id int64) error
 }
@@ -256,6 +257,16 @@ func (h *Handler) ListMovies() func(c *gin.Context) {
 			return
 		}
 
-		fmt.Fprintf(c.Writer, "%+v\n", input)
+		movies, err := h.MovieService.GetMovies(c.Request.Context(), input.Title, input.Genres, input.Filters)
+		if err != nil {
+			httphelpers.StatusInternalServerErrorResponse(c, err)
+			return
+		}
+
+		err = httphelpers.WriteJSON(c, http.StatusOK, gin.H{"movies": movies}, nil)
+		if err != nil {
+			httphelpers.StatusInternalServerErrorResponse(c, err)
+			return
+		}
 	}
 }

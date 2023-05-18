@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 
+	commonmodels "greenlight/internal/models"
 	models "greenlight/internal/movies/models"
 	"greenlight/internal/repoerrors"
 
@@ -52,7 +53,7 @@ func (m movieRepo) Get(ctx context.Context, id int64) (models.Movie, error) {
 
 	var movie models.Movie
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
 	err := m.DB.GetContext(ctx, &movie, query, id)
@@ -66,6 +67,25 @@ func (m movieRepo) Get(ctx context.Context, id int64) (models.Movie, error) {
 	}
 
 	return movie, nil
+}
+
+func (m movieRepo) GetAll(ctx context.Context, title string, genres []string, filters commonmodels.Filters) ([]models.Movie, error) {
+	query := `
+		SELECT id, created_at, title, year, runtime, genres, version
+		FROM movies
+		ORDER BY id`
+
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	var movies []models.Movie
+
+	err := m.DB.SelectContext(ctx, &movies, query)
+	if err != nil {
+		return movies, err
+	}
+
+	return movies, nil
 }
 
 func (m movieRepo) Update(ctx context.Context, movie models.Movie) (models.Movie, error) {
@@ -84,7 +104,7 @@ func (m movieRepo) Update(ctx context.Context, movie models.Movie) (models.Movie
 		movie.Version,
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
 	err := m.DB.GetContext(ctx, &movie, query, args...)
@@ -109,7 +129,7 @@ func (m movieRepo) Delete(ctx context.Context, id int64) error {
 		DELETE FROM movies
 		WHERE id = $1`
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
 	result, err := m.DB.ExecContext(ctx, query, id)
