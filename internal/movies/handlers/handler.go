@@ -263,6 +263,10 @@ func (h *Handler) ListMovies() func(c *gin.Context) {
 			return
 		}
 
+		if len(movies) == 0 {
+			movies = []models.Movie{}
+		}
+
 		err = httphelpers.WriteJSON(c, http.StatusOK, gin.H{"movies": movies}, nil)
 		if err != nil {
 			httphelpers.StatusInternalServerErrorResponse(c, err)

@@ -73,6 +73,8 @@ func (m movieRepo) GetAll(ctx context.Context, title string, genres []string, fi
 	query := `
 		SELECT id, created_at, title, year, runtime, genres, version
 		FROM movies
+		WHERE (to_tsvector('simple', title) @@ plainto_tsquery('simple', $1) OR $1 = '') 
+		AND (genres @> $2 OR $2 = '{}')     
 		ORDER BY id`
 
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
@@ -80,7 +82,7 @@ func (m movieRepo) GetAll(ctx context.Context, title string, genres []string, fi
 
 	var movies []models.Movie
 
-	err := m.DB.SelectContext(ctx, &movies, query)
+	err := m.DB.SelectContext(ctx, &movies, query, title, pq.StringArray(genres))
 	if err != nil {
 		return movies, err
 	}
