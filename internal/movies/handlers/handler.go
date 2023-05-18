@@ -9,7 +9,7 @@ import (
 	"time"
 
 	commonmodels "greenlight/internal/models"
-	models "greenlight/internal/movies/models"
+	"greenlight/internal/movies/models"
 	"greenlight/internal/serviceerrors"
 	"greenlight/pkg/httphelpers"
 	"greenlight/pkg/validator"
@@ -40,7 +40,7 @@ type updateMovieInput struct {
 type MovieService interface {
 	AddMovie(ctx context.Context, movie models.Movie) (models.Movie, error)
 	GetMovie(ctx context.Context, id int64) (models.Movie, error)
-	GetMovies(ctx context.Context, title string, genres []string, filters commonmodels.Filters) ([]models.Movie, error)
+	GetMovies(ctx context.Context, title string, genres []string, filters commonmodels.Filters) ([]models.Movie, commonmodels.Metadata, error)
 	UpdateMovie(ctx context.Context, movie models.Movie) (models.Movie, error)
 	DeleteMovie(ctx context.Context, id int64) error
 }
@@ -257,7 +257,7 @@ func (h *Handler) ListMovies() func(c *gin.Context) {
 			return
 		}
 
-		movies, err := h.MovieService.GetMovies(c.Request.Context(), input.Title, input.Genres, input.Filters)
+		movies, metadata, err := h.MovieService.GetMovies(c.Request.Context(), input.Title, input.Genres, input.Filters)
 		if err != nil {
 			httphelpers.StatusInternalServerErrorResponse(c, err)
 			return
@@ -267,7 +267,7 @@ func (h *Handler) ListMovies() func(c *gin.Context) {
 			movies = []models.Movie{}
 		}
 
-		err = httphelpers.WriteJSON(c, http.StatusOK, gin.H{"movies": movies}, nil)
+		err = httphelpers.WriteJSON(c, http.StatusOK, gin.H{"movies": movies, "metadata": metadata}, nil)
 		if err != nil {
 			httphelpers.StatusInternalServerErrorResponse(c, err)
 			return
