@@ -22,13 +22,13 @@ func NewMovieService(repo MovieRepo) *movieService {
 	}
 }
 
-func (m movieService) AddMovie(ctx context.Context, movie models.Movie) error {
-	_, err := m.repo.Insert(ctx, movie)
+func (m movieService) AddMovie(ctx context.Context, movie models.Movie) (models.Movie, error) {
+	movie, err := m.repo.Insert(ctx, movie)
 	if err != nil {
-		return err
+		return models.Movie{}, err
 	}
 
-	return nil
+	return movie, nil
 }
 
 func (m movieService) GetMovie(ctx context.Context, id int64) (models.Movie, error) {
@@ -40,13 +40,13 @@ func (m movieService) GetMovie(ctx context.Context, id int64) (models.Movie, err
 	return movie, nil
 }
 
-func (m movieService) UpdateMovie(ctx context.Context, movie models.Movie) error {
-	_, err := m.repo.Update(ctx, movie)
+func (m movieService) UpdateMovie(ctx context.Context, movie models.Movie) (models.Movie, error) {
+	movie, err := m.repo.Update(ctx, movie)
 	if err != nil {
-		return err
+		return models.Movie{}, err
 	}
 
-	return nil
+	return movie, nil
 }
 
 func (m movieService) DeleteMovie(ctx context.Context, id int64) error {

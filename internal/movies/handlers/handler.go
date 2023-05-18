@@ -10,7 +10,7 @@ import (
 
 	commonmodels "greenlight/internal/models"
 	models "greenlight/internal/movies/models"
-	"greenlight/internal/repoerrors"
+	"greenlight/internal/serviceerrors"
 	"greenlight/pkg/httphelpers"
 	"greenlight/pkg/validator"
 
@@ -38,9 +38,9 @@ type updateMovieInput struct {
 }
 
 type MovieService interface {
-	AddMovie(ctx context.Context, movie models.Movie) error
+	AddMovie(ctx context.Context, movie models.Movie) (models.Movie, error)
 	GetMovie(ctx context.Context, id int64) (models.Movie, error)
-	UpdateMovie(ctx context.Context, movie models.Movie) error
+	UpdateMovie(ctx context.Context, movie models.Movie) (models.Movie, error)
 	DeleteMovie(ctx context.Context, id int64) error
 }
 
@@ -77,7 +77,7 @@ func (h *Handler) CreateMovie() func(c *gin.Context) {
 		}
 
 		ctx := c.Request.Context()
-		err = h.MovieService.AddMovie(ctx, movie)
+		movie, err = h.MovieService.AddMovie(ctx, movie)
 		if err != nil {
 			httphelpers.StatusInternalServerErrorResponse(c, err)
 			return
@@ -121,7 +121,7 @@ func (h *Handler) ShowMovie() func(c *gin.Context) {
 		movie, err := h.MovieService.GetMovie(ctx, id)
 		if err != nil {
 			switch {
-			case errors.Is(err, repoerrors.ErrRecordNotFound):
+			case errors.Is(err, serviceerrors.ErrRecordNotFound):
 				httphelpers.StatusNotFoundResponse(c)
 			default:
 				httphelpers.StatusInternalServerErrorResponse(c, err)
@@ -148,7 +148,7 @@ func (h *Handler) UpdateMovie() func(c *gin.Context) {
 		movie, err := h.MovieService.GetMovie(ctx, id)
 		if err != nil {
 			switch {
-			case errors.Is(err, repoerrors.ErrRecordNotFound):
+			case errors.Is(err, serviceerrors.ErrRecordNotFound):
 				httphelpers.StatusNotFoundResponse(c)
 			default:
 				httphelpers.StatusInternalServerErrorResponse(c, err)
@@ -186,10 +186,10 @@ func (h *Handler) UpdateMovie() func(c *gin.Context) {
 			return
 		}
 
-		err = h.MovieService.UpdateMovie(ctx, movie)
+		movie, err = h.MovieService.UpdateMovie(ctx, movie)
 		if err != nil {
 			switch {
-			case errors.Is(err, repoerrors.ErrEditConflict):
+			case errors.Is(err, serviceerrors.ErrEditConflict):
 				httphelpers.StatusConflictResponse(c)
 			default:
 				httphelpers.StatusInternalServerErrorResponse(c, err)
@@ -217,7 +217,7 @@ func (h *Handler) DeleteMovie() func(c *gin.Context) {
 		err = h.MovieService.DeleteMovie(ctx, id)
 		if err != nil {
 			switch {
-			case errors.Is(err, repoerrors.ErrRecordNotFound):
+			case errors.Is(err, serviceerrors.ErrRecordNotFound):
 				httphelpers.StatusNotFoundResponse(c)
 			default:
 				httphelpers.StatusInternalServerErrorResponse(c, err)
@@ -249,8 +249,9 @@ func (h *Handler) ListMovies() func(c *gin.Context) {
 		input.Filters.Page = httphelpers.ReadInt(qs, "page", 1, v)
 		input.Filters.PageSize = httphelpers.ReadInt(qs, "page_size", 20, v)
 		input.Filters.Sort = httphelpers.ReadString(qs, "sort", "id")
+		input.Filters.SortSafeList = []string{"id", "title", "year", "runtime", "-id", "-title", "-year", "-runtime"}
 
-		if !v.Valid() {
+		if commonmodels.ValidateFilters(v, input.Filters); !v.Valid() {
 			httphelpers.StatusBadRequestJSONPayloadResponse(c, v.Errors)
 			return
 		}
