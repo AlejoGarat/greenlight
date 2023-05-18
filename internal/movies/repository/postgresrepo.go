@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	commonmodels "greenlight/internal/models"
@@ -70,19 +71,24 @@ func (m movieRepo) Get(ctx context.Context, id int64) (models.Movie, error) {
 }
 
 func (m movieRepo) GetAll(ctx context.Context, title string, genres []string, filters commonmodels.Filters) ([]models.Movie, error) {
-	query := `
+	column, err := filters.SortColumn()
+	if err != nil {
+		return []models.Movie{}, err
+	}
+
+	query := fmt.Sprintf(`
 		SELECT id, created_at, title, year, runtime, genres, version
 		FROM movies
 		WHERE (to_tsvector('simple', title) @@ plainto_tsquery('simple', $1) OR $1 = '') 
 		AND (genres @> $2 OR $2 = '{}')     
-		ORDER BY id`
+		ORDER BY %s %s, id ASC`, column, filters.SortDirection())
 
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
 	var movies []models.Movie
 
-	err := m.DB.SelectContext(ctx, &movies, query, title, pq.StringArray(genres))
+	err = m.DB.SelectContext(ctx, &movies, query, title, pq.StringArray(genres))
 	if err != nil {
 		return movies, err
 	}
