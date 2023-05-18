@@ -167,3 +167,8 @@ func CustomStatusPayloadResponse(c *gin.Context, status int, payload any, conten
 	_, err = c.Writer.Write(pL)
 	return err
 }
+
+func RateLimitExceededResponse(c *gin.Context) {
+	message := "rate limit exceeded"
+	CustomStatusJSONPayloadResponse(c, http.StatusTooManyRequests, gin.H{"error": message})
+}

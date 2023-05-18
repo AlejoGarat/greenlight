@@ -20,6 +20,7 @@ import (
 	moviesService "greenlight/internal/movies/service"
 	"greenlight/pkg/httphelpers"
 	"greenlight/pkg/jsonlog"
+	"greenlight/pkg/middlewares"
 )
 
 const version = "1.0.0"
@@ -76,6 +77,8 @@ func main() {
 		MovieService: ms,
 	}
 
+	r.Use(middlewares.RecoverPanic())
+	r.Use(middlewares.RateLimit())
 	v1 := r.Group("/v1")
 	{
 		healthcheckRoutes.MakeRoutes(v1, healthcheckHandler)
