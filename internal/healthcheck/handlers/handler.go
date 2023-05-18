@@ -1,16 +1,16 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
 
 	"greenlight/pkg/httphelpers"
+	"greenlight/pkg/jsonlog"
 
 	"github.com/gin-gonic/gin"
 )
 
 type Handler struct {
-	Logger  *log.Logger
+	Logger  *jsonlog.Logger
 	Version string
 	Env     string
 }

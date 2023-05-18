@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
@@ -12,13 +11,14 @@ import (
 	"greenlight/internal/movies/models"
 	"greenlight/internal/serviceerrors"
 	"greenlight/pkg/httphelpers"
+	"greenlight/pkg/jsonlog"
 	"greenlight/pkg/validator"
 
 	"github.com/gin-gonic/gin"
 )
 
 type Handler struct {
-	Logger       *log.Logger
+	Logger       *jsonlog.Logger
 	Version      string
 	Env          string
 	MovieService MovieService
@@ -45,7 +45,7 @@ type MovieService interface {
 	DeleteMovie(ctx context.Context, id int64) error
 }
 
-func New(logger *log.Logger, version, env string) *Handler {
+func New(logger *jsonlog.Logger, version, env string) *Handler {
 	return &Handler{
 		Logger:  logger,
 		Version: version,

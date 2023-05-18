@@ -19,6 +19,7 @@ import (
 	moviesRoutes "greenlight/internal/movies/routes"
 	moviesService "greenlight/internal/movies/service"
 	"greenlight/pkg/httphelpers"
+	"greenlight/pkg/jsonlog"
 )
 
 const version = "1.0.0"
@@ -45,13 +46,13 @@ func main() {
 	flag.StringVar(&cfg.db.maxIdleTime, "db-max-idle-time", "15m", "PostgreSQL max connection idle time")
 	flag.Parse()
 
-	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
+	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
 
 	var err error
 
 	db, err := openDB(cfg)
 	if err != nil {
-		logger.Fatal(err)
+		logger.PrintFatal(err, nil)
 	}
 	defer db.Close()
 
@@ -81,7 +82,10 @@ func main() {
 		moviesRoutes.MakeRoutes(v1, moviesHandler)
 	}
 
-	logger.Printf("starting %s server on %s", cfg.env, ":4000")
+	logger.PrintInfo("starting server", map[string]string{
+		"addr": ":4000",
+		"env":  cfg.env,
+	})
 
 	err = r.Run(":4000")
 
