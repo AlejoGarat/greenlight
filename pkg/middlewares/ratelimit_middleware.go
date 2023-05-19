@@ -16,7 +16,7 @@ type client struct {
 	lastSeen time.Time
 }
 
-func RateLimit() gin.HandlerFunc {
+func RateLimit(enabled bool) gin.HandlerFunc {
 	var (
 		mu      sync.Mutex
 		clients = make(map[string]*client)
@@ -39,28 +39,31 @@ func RateLimit() gin.HandlerFunc {
 	}()
 
 	return func(c *gin.Context) {
-		ip, _, err := net.SplitHostPort(c.Request.RemoteAddr)
-		if err != nil {
-			httphelpers.StatusInternalServerErrorResponse(c, err)
-			c.Abort()
-			return
-		}
+		if enabled {
+			ip, _, err := net.SplitHostPort(c.Request.RemoteAddr)
+			if err != nil {
+				httphelpers.StatusInternalServerErrorResponse(c, err)
+				c.Abort()
+				return
+			}
 
-		mu.Lock()
+			mu.Lock()
 
-		if _, found := clients[ip]; !found {
-			clients[ip] = &client{limiter: rate.NewLimiter(2, 4)}
-		}
-		clients[ip].lastSeen = time.Now()
+			if _, found := clients[ip]; !found {
+				clients[ip] = &client{limiter: rate.NewLimiter(2, 4)}
+			}
+			clients[ip].lastSeen = time.Now()
 
-		if !clients[ip].limiter.Allow() {
+			if !clients[ip].limiter.Allow() {
+				mu.Unlock()
+				httphelpers.RateLimitExceededResponse(c)
+				c.Abort()
+				return
+			}
+
 			mu.Unlock()
-			httphelpers.RateLimitExceededResponse(c)
-			c.Abort()
-			return
-		}
 
-		mu.Unlock()
+		}
 		c.Next()
 	}
 }
