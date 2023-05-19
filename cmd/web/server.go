@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -31,20 +32,41 @@ func Serve(info info, r *gin.Engine) error {
 		WriteTimeout: 10 * time.Second,
 	}
 
+	shutdownError := make(chan error)
+
 	go func() {
 		quit := make(chan os.Signal, 1)
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 		s := <-quit
-		info.logger.PrintInfo("caught signal", map[string]string{
+
+		info.logger.PrintInfo("shutting down server", map[string]string{
 			"signal": s.String(),
 		})
-		os.Exit(0)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		shutdownError <- srv.Shutdown(ctx)
 	}()
 
 	info.logger.PrintInfo("starting server", map[string]string{
-		"addr": ":4000",
+		"addr": srv.Addr,
 		"env":  info.cfg.env,
 	})
 
-	return r.Run(srv.Addr)
+	err := r.Run(srv.Addr)
+	if err != nil {
+		return err
+	}
+
+	err = <-shutdownError
+	if err != nil {
+		return err
+	}
+
+	info.logger.PrintInfo("stopped server", map[string]string{
+		"addr": srv.Addr,
+	})
+
+	return nil
 }
