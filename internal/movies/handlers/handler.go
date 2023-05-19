@@ -2,8 +2,10 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -251,6 +253,12 @@ func (h *Handler) ListMovies() func(c *gin.Context) {
 		input.Filters.PageSize = httphelpers.ReadInt(qs, "page_size", 20, v)
 		input.Filters.Sort = httphelpers.ReadString(qs, "sort", "id")
 		input.Filters.SortSafeList = []string{"id", "title", "year", "runtime", "-id", "-title", "-year", "-runtime"}
+		query := struct {
+			Query string `json:"query"`
+		}{}
+		body, _ := io.ReadAll(c.Request.Body)
+		json.Unmarshal(body, &query)
+		input.Filters.Sort = query.Query
 
 		if commonmodels.ValidateFilters(v, input.Filters); !v.Valid() {
 			httphelpers.StatusBadRequestJSONPayloadResponse(c, v.Errors)

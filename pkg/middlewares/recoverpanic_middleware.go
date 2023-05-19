@@ -1,6 +1,8 @@
 package middlewares
 
 import (
+	"fmt"
+
 	"greenlight/pkg/httphelpers"
 
 	"github.com/gin-gonic/gin"
@@ -9,8 +11,12 @@ import (
 func RecoverPanic() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
-			if err := recover(); err != nil {
-				httphelpers.StatusInternalServerErrorResponse(c, err.(error))
+			if errPanic := recover(); errPanic != nil {
+				err, ok := errPanic.(error)
+				if !ok {
+					err = fmt.Errorf("%v", errPanic)
+				}
+				httphelpers.StatusInternalServerErrorResponse(c, err)
 			}
 		}()
 		c.Next()
