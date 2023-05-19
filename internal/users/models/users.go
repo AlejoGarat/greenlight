@@ -4,17 +4,19 @@ import (
 	"errors"
 	"time"
 
+	"greenlight/pkg/validator"
+
 	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
-	ID        int64     `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	Name      string    `json:"name"`
-	Email     string    `json:"email"`
-	Password  Password  `json:"-"`
-	Activated bool      `json:"activated"`
-	Version   int       `json:"-"`
+	ID        int64     `json:"id" db:"id"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	Name      string    `json:"name" db:"name"`
+	Email     string    `json:"email" db:"email"`
+	Password  Password  `json:"-" db:"password"`
+	Activated bool      `json:"activated" db:"activated"`
+	Version   int       `json:"-" db:"version"`
 }
 
 type Password struct {
@@ -46,4 +48,30 @@ func (p *Password) Matches(plaintextPassword string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func ValidateEmail(v *validator.Validator, email string) {
+	v.Check(email != "", "email", "must be provided")
+	v.Check(validator.Matches(email, validator.EmailRX), "email", "must be a valid email address")
+}
+
+func ValidatePasswordPlaintext(v *validator.Validator, password string) {
+	v.Check(password != "", "password", "must be provided")
+	v.Check(len(password) >= 8, "password", "must be at least 8 bytes long")
+	v.Check(len(password) <= 72, "password", "must not be more than 72 bytes long")
+}
+
+func ValidateUser(v *validator.Validator, user *User) {
+	v.Check(user.Name != "", "name", "must be provided")
+	v.Check(len(user.Name) <= 500, "name", "must not be more than 500 bytes long")
+
+	ValidateEmail(v, user.Email)
+
+	if user.Password.Plaintext != nil {
+		ValidatePasswordPlaintext(v, *user.Password.Plaintext)
+	}
+
+	if user.Password.Hash == nil {
+		panic("missing password hash for user")
+	}
 }

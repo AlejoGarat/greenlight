@@ -2,7 +2,10 @@ package service
 
 import (
 	"context"
+	"errors"
 
+	"greenlight/internal/repoerrors"
+	"greenlight/internal/serviceerrors"
 	"greenlight/internal/users/models"
 )
 
@@ -24,6 +27,10 @@ func NewUserService(repo UserRepo) *userService {
 func (s userService) AddUser(ctx context.Context, user models.User) (models.User, error) {
 	user, err := s.repo.Insert(ctx, user)
 	if err != nil {
+		switch {
+		case errors.Is(err, repoerrors.ErrDuplicateEmail):
+			return models.User{}, serviceerrors.ErrDuplicateEmail
+		}
 		return models.User{}, err
 	}
 
