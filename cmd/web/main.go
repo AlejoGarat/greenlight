@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"log"
 	"os"
 	"time"
 
@@ -86,22 +85,23 @@ func main() {
 	}
 
 	r.Use(middlewares.RecoverPanic())
-	r.Use(middlewares.RateLimit())
+	r.Use(middlewares.RateLimit(cfg.limiter.enabled))
 	v1 := r.Group("/v1")
 	{
 		healthcheckRoutes.MakeRoutes(v1, healthcheckHandler)
 		moviesRoutes.MakeRoutes(v1, moviesHandler)
 	}
 
-	logger.PrintInfo("starting server", map[string]string{
-		"addr": ":4000",
-		"env":  cfg.env,
-	})
+	info := info{
+		cfg:                &cfg,
+		logger:             logger,
+		HealthcheckHandler: healthcheckHandler,
+		MoviesHandler:      moviesHandler,
+	}
 
-	err = r.Run(":4000")
-
+	err = Serve(info, r)
 	if err != nil {
-		log.Fatal(err)
+		logger.PrintFatal(err, nil)
 	}
 }
 
