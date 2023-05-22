@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	"greenlight/internal/repoerrors"
 	"greenlight/internal/users/models"
+	"greenlight/internal/users/repoerrors"
 
 	"github.com/jmoiron/sqlx"
 )

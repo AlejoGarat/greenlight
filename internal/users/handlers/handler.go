@@ -5,8 +5,8 @@ import (
 	"errors"
 	"net/http"
 
-	"greenlight/internal/serviceerrors"
 	"greenlight/internal/users/models"
+	"greenlight/internal/users/serviceerrors"
 	"greenlight/pkg/httphelpers"
 	"greenlight/pkg/jsonlog"
 	"greenlight/pkg/validator"
@@ -56,7 +56,6 @@ func (h *Handler) AddUser() func(c *gin.Context) {
 			Email:     userInput.Email,
 			Activated: false,
 		}
-
 		err = user.Password.Set(userInput.Password)
 		if err != nil {
 			httphelpers.StatusInternalServerErrorResponse(c, err)
@@ -72,7 +71,7 @@ func (h *Handler) AddUser() func(c *gin.Context) {
 		user, err = h.UserService.AddUser(c, user)
 		if err != nil {
 			switch {
-			case errors.Is(err, serviceerrors.ErrDuplicateEmail):
+			case errors.Is(err, serviceerrors.ErrDuplicatedEmail):
 				v.AddError("email", "a user with this email address already exists")
 				httphelpers.StatusUnprocesableEntities(c, v.Errors)
 			default:

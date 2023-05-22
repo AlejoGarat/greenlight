@@ -13,7 +13,10 @@ type Handler interface {
 }
 
 func MakeRoutes(engine *gin.RouterGroup, handler *handlers.Handler) {
-	engine.POST("users", handler.AddUser())
-	engine.GET("users/:email", handler.GetUserByEmail())
-	engine.PUT("users", handler.UpdateUser())
+	users := engine.Group("/users")
+	{
+		users.POST("", handler.AddUser())
+		users.PUT("", handler.UpdateUser())
+		users.GET("/:email", handler.GetUserByEmail())
+	}
 }

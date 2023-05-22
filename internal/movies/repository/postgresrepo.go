@@ -9,7 +9,7 @@ import (
 
 	commonmodels "greenlight/internal/models"
 	"greenlight/internal/movies/models"
-	"greenlight/internal/repoerrors"
+	"greenlight/internal/movies/repoerrors"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"

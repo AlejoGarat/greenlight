@@ -11,7 +11,7 @@ import (
 
 	commonmodels "greenlight/internal/models"
 	"greenlight/internal/movies/models"
-	"greenlight/internal/serviceerrors"
+	"greenlight/internal/users/serviceerrors"
 	"greenlight/pkg/httphelpers"
 	"greenlight/pkg/jsonlog"
 	"greenlight/pkg/validator"
@@ -124,7 +124,7 @@ func (h *Handler) ShowMovie() func(c *gin.Context) {
 		movie, err := h.MovieService.GetMovie(ctx, id)
 		if err != nil {
 			switch {
-			case errors.Is(err, serviceerrors.ErrRecordNotFound):
+			case errors.Is(err, serviceerrors.ErrNoUserFound):
 				httphelpers.StatusNotFoundResponse(c)
 			default:
 				httphelpers.StatusInternalServerErrorResponse(c, err)
@@ -151,7 +151,7 @@ func (h *Handler) UpdateMovie() func(c *gin.Context) {
 		movie, err := h.MovieService.GetMovie(ctx, id)
 		if err != nil {
 			switch {
-			case errors.Is(err, serviceerrors.ErrRecordNotFound):
+			case errors.Is(err, serviceerrors.ErrNoUserFound):
 				httphelpers.StatusNotFoundResponse(c)
 			default:
 				httphelpers.StatusInternalServerErrorResponse(c, err)
@@ -220,7 +220,7 @@ func (h *Handler) DeleteMovie() func(c *gin.Context) {
 		err = h.MovieService.DeleteMovie(ctx, id)
 		if err != nil {
 			switch {
-			case errors.Is(err, serviceerrors.ErrRecordNotFound):
+			case errors.Is(err, serviceerrors.ErrNoUserFound):
 				httphelpers.StatusNotFoundResponse(c)
 			default:
 				httphelpers.StatusInternalServerErrorResponse(c, err)
