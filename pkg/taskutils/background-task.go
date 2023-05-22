@@ -4,9 +4,13 @@ import (
 	"fmt"
 	"log"
 	"sync"
+
+	"greenlight/pkg/jsonlog"
 )
 
 type LogFunc func(v any)
+
+var Logger *jsonlog.Logger
 
 var (
 	logFunc LogFunc
@@ -36,11 +40,31 @@ func BackgroundTask(task func()) {
 	defer func() {
 		defer wg.Done()
 		if err := recover(); err != nil {
-			logFunc(fmt.Errorf("%s", err))
+			if Logger != nil {
+				Logger.PrintError(fmt.Errorf("%s", err), nil)
+			} else {
+				log.Print(err)
+			}
 		}
 	}()
 
 	task()
+}
+
+func Background(fn func()) {
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				if Logger != nil {
+					Logger.PrintError(fmt.Errorf("%s", err), nil)
+				} else {
+					log.Print(err)
+				}
+			}
+		}()
+
+		fn()
+	}()
 }
 
 // Block until all background tasks are finished

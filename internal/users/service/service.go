@@ -9,6 +9,7 @@ import (
 	"greenlight/internal/users/models"
 	"greenlight/pkg/jsonlog"
 	"greenlight/pkg/mailer"
+	"greenlight/pkg/taskutils"
 )
 
 type userService struct {
@@ -40,12 +41,12 @@ func (s userService) AddUser(ctx context.Context, user models.User) (models.User
 		return models.User{}, err
 	}
 
-	go func() {
+	taskutils.BackgroundTask(func() {
 		err = s.mailer.Send(user.Email, "user_welcome.tmpl", user)
 		if err != nil {
 			s.logger.PrintError(err, nil)
 		}
-	}()
+	})
 
 	return user, nil
 }

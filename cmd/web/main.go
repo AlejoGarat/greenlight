@@ -25,6 +25,7 @@ import (
 	"greenlight/pkg/jsonlog"
 	"greenlight/pkg/mailer"
 	"greenlight/pkg/middlewares"
+	"greenlight/pkg/taskutils"
 )
 
 const version = "1.0.0"
@@ -53,6 +54,7 @@ type config struct {
 }
 
 func main() {
+	taskutils.Logger = &jsonlog.Logger{}
 	var cfg config
 
 	flag.IntVar(&cfg.port, "port", 4000, "API server port")

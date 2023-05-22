@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"greenlight/pkg/jsonlog"
+	"greenlight/pkg/taskutils"
 
 	healthcheckHandler "greenlight/internal/healthcheck/handlers"
 	moviesHandler "greenlight/internal/movies/handlers"
@@ -46,7 +47,16 @@ func Serve(info info, r *gin.Engine) error {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 
-		shutdownError <- srv.Shutdown(ctx)
+		err := srv.Shutdown(ctx)
+		if err != nil {
+			shutdownError <- err
+		}
+
+		info.logger.PrintInfo("completing background tasks", map[string]string{
+			"addr": srv.Addr,
+		})
+
+		taskutils.WaitAll()
 	}()
 
 	info.logger.PrintInfo("starting server", map[string]string{
