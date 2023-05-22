@@ -7,10 +7,14 @@ import (
 	"greenlight/internal/repoerrors"
 	"greenlight/internal/serviceerrors"
 	"greenlight/internal/users/models"
+	"greenlight/pkg/jsonlog"
+	"greenlight/pkg/mailer"
 )
 
 type userService struct {
-	repo UserRepo
+	repo   UserRepo
+	logger *jsonlog.Logger
+	mailer mailer.Mailer
 }
 type UserRepo interface {
 	Insert(ctx context.Context, user models.User) (models.User, error)
@@ -18,9 +22,11 @@ type UserRepo interface {
 	Update(ctx context.Context, user models.User) (models.User, error)
 }
 
-func NewUserService(repo UserRepo) *userService {
+func NewUserService(repo UserRepo, logger *jsonlog.Logger, mailer mailer.Mailer) *userService {
 	return &userService{
-		repo: repo,
+		repo:   repo,
+		mailer: mailer,
+		logger: logger,
 	}
 }
 
@@ -33,6 +39,13 @@ func (s userService) AddUser(ctx context.Context, user models.User) (models.User
 		}
 		return models.User{}, err
 	}
+
+	go func() {
+		err = s.mailer.Send(user.Email, "user_welcome.tmpl", user)
+		if err != nil {
+			s.logger.PrintError(err, nil)
+		}
+	}()
 
 	return user, nil
 }

@@ -81,7 +81,7 @@ func (h *Handler) AddUser() func(c *gin.Context) {
 			return
 		}
 
-		err = httphelpers.WriteJSON(c, http.StatusOK, gin.H{"user": user}, nil)
+		err = httphelpers.WriteJSON(c, http.StatusAccepted, gin.H{"user": user}, nil)
 		if err != nil {
 			httphelpers.StatusInternalServerErrorResponse(c, err)
 		}
