@@ -35,7 +35,10 @@ func (r tokenRepo) Insert(ctx context.Context, userID int64, ttl time.Duration, 
 	defer cancel()
 
 	_, err = r.DB.ExecContext(ctx, query, args...)
-	return models.Token{}, err
+	if err != nil {
+		return models.Token{}, err
+	}
+	return token, nil
 }
 
 func (r tokenRepo) DeleteAllForUser(ctx context.Context, scope string, userID int64) error {

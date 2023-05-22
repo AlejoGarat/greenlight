@@ -19,8 +19,8 @@ type Token struct {
 	Scope     string
 }
 
-func GenerateToken(userID int64, ttl time.Duration, scope string) (*Token, error) {
-	token := &Token{
+func GenerateToken(userID int64, ttl time.Duration, scope string) (Token, error) {
+	token := Token{
 		UserID: userID,
 		Expiry: time.Now().Add(ttl),
 		Scope:  scope,
@@ -30,7 +30,7 @@ func GenerateToken(userID int64, ttl time.Duration, scope string) (*Token, error
 
 	_, err := rand.Read(randomBytes)
 	if err != nil {
-		return nil, err
+		return Token{}, err
 	}
 
 	token.Plaintext = base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(randomBytes)

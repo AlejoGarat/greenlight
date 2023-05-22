@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"time"
 
 	"greenlight/internal/users/models"
 	"greenlight/internal/users/repoerrors"
@@ -13,21 +14,28 @@ import (
 )
 
 type userService struct {
-	repo   UserRepo
-	logger *jsonlog.Logger
-	mailer mailer.Mailer
+	repo       UserRepo
+	tokensRepo TokensRepo
+	logger     *jsonlog.Logger
+	mailer     mailer.Mailer
 }
+type TokensRepo interface {
+	Insert(ctx context.Context, userID int64, ttl time.Duration, scope string) (models.Token, error)
+	DeleteAllForUser(ctx context.Context, scope string, userID int64) error
+}
+
 type UserRepo interface {
 	Insert(ctx context.Context, user models.User) (models.User, error)
 	GetByEmail(ctx context.Context, email string) (models.User, error)
 	Update(ctx context.Context, user models.User) (models.User, error)
 }
 
-func NewUserService(repo UserRepo, logger *jsonlog.Logger, mailer mailer.Mailer) *userService {
+func NewUserService(repo UserRepo, tokensRepo TokensRepo, logger *jsonlog.Logger, mailer mailer.Mailer) *userService {
 	return &userService{
-		repo:   repo,
-		mailer: mailer,
-		logger: logger,
+		repo:       repo,
+		tokensRepo: tokensRepo,
+		mailer:     mailer,
+		logger:     logger,
 	}
 }
 
@@ -41,10 +49,21 @@ func (s userService) AddUser(ctx context.Context, user models.User) (models.User
 		return models.User{}, err
 	}
 
+	token, err := s.tokensRepo.Insert(ctx, user.ID, 3*24*time.Hour, models.ScopeActivation)
+	if err != nil {
+		return models.User{}, err
+	}
+
 	go taskutils.BackgroundTask(func() {
-		err = s.mailer.Send(user.Email, "user_welcome.tmpl", user)
+		data := map[string]any{
+			"activationToken": token.Plaintext,
+			"userID":          user.ID,
+		}
+
+		err = s.mailer.Send(user.Email, "user_welcome.tmpl", data)
 		if err != nil {
 			s.logger.PrintError(err, nil)
+			return
 		}
 	})
 

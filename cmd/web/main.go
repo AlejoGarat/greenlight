@@ -104,8 +104,10 @@ func main() {
 	}
 
 	ur := usersRepo.NewMovieRepo(db)
+	tr := usersRepo.New(db)
 	mailer := mailer.New(cfg.smtp.host, cfg.smtp.port, cfg.smtp.username, cfg.smtp.password, cfg.smtp.sender)
 	us := usersService.NewUserService(ur,
+		tr,
 		logger,
 		mailer)
 
