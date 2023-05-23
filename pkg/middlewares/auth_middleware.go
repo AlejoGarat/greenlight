@@ -24,7 +24,6 @@ func Authenticate(userRepo UserRepo) gin.HandlerFunc {
 		authorizationHeader := c.GetHeader("Authorization")
 		if authorizationHeader == "" {
 			httphelpers.ContextSetUser(c, models.AnonymousUser)
-			c.Next()
 			return
 		}
 
@@ -47,7 +46,7 @@ func Authenticate(userRepo UserRepo) gin.HandlerFunc {
 		user, err := userRepo.GetForToken(c, models.ScopeAuthentication, token)
 		if err != nil {
 			switch {
-			case errors.Is(err, repoerrors.ErrRecordNotFound):
+			case errors.Is(err, repoerrors.ErrNoRows):
 				httphelpers.StatusUnauthorizedResponse(c)
 			default:
 				httphelpers.StatusInternalServerErrorResponse(c, err)

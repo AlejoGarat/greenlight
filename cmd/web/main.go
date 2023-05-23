@@ -83,9 +83,9 @@ func main() {
 	}
 	defer db.Close()
 
-	r := gin.Default()
-	r.NoRoute(gin.HandlerFunc(httphelpers.StatusNotFoundResponse))
-	r.NoMethod(gin.HandlerFunc(httphelpers.StatusMethodNotAllowedResponse))
+	engine := gin.Default()
+	engine.NoRoute(gin.HandlerFunc(httphelpers.StatusNotFoundResponse))
+	engine.NoMethod(gin.HandlerFunc(httphelpers.StatusMethodNotAllowedResponse))
 
 	healthcheckHandler := &healthcheckHandler.Handler{
 		Logger:  logger,
@@ -132,10 +132,13 @@ func main() {
 		UserService:  us,
 	}
 
-	r.Use(middlewares.RecoverPanic())
-	r.Use(middlewares.RateLimit(cfg.limiter.enabled))
-	r.Use(middlewares.Authenticate(ur))
-	v1 := r.Group("/v1")
+	engine.Use(
+		middlewares.RecoverPanic(),
+		middlewares.RateLimit(cfg.limiter.enabled),
+		middlewares.Authenticate(ur),
+		middlewares.RequireActivatedUser(),
+	)
+	v1 := engine.Group("/v1")
 	{
 		healthcheckRoutes.MakeRoutes(v1, healthcheckHandler)
 		moviesRoutes.MakeRoutes(v1, moviesHandler)
@@ -149,7 +152,7 @@ func main() {
 		MoviesHandler:      moviesHandler,
 	}
 
-	err = Serve(info, r)
+	err = Serve(info, engine)
 	if err != nil {
 		logger.PrintFatal(err, nil)
 	}
