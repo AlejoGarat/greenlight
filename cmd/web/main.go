@@ -17,6 +17,7 @@ import (
 	moviesRepo "greenlight/internal/movies/repository"
 	moviesRoutes "greenlight/internal/movies/routes"
 	moviesService "greenlight/internal/movies/service"
+	permissionsRepo "greenlight/internal/permissions/repository"
 	utHandler "greenlight/internal/users/handlers"
 	usersRepo "greenlight/internal/users/repo"
 	userRoutes "greenlight/internal/users/routes"
@@ -132,11 +133,13 @@ func main() {
 		UserService:  us,
 	}
 
+	pr := permissionsRepo.NewPermissionsRepo(db)
+
 	engine.Use(
 		middlewares.RecoverPanic(),
 		middlewares.RateLimit(cfg.limiter.enabled),
 		middlewares.Authenticate(ur),
-		middlewares.RequireActivatedUser(),
+		middlewares.RequirePermission(pr, "movies:read"),
 	)
 	v1 := engine.Group("/v1")
 	{

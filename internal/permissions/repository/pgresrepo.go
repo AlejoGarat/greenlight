@@ -13,6 +13,12 @@ type permissionRepo struct {
 	DB *sqlx.DB
 }
 
+func NewPermissionsRepo(db *sqlx.DB) *permissionRepo {
+	return &permissionRepo{
+		DB: db,
+	}
+}
+
 func (r permissionRepo) GetAllForUser(ctx context.Context, userID int64) (models.Permissions, error) {
 	query := `
         SELECT permissions.code
