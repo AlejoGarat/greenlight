@@ -15,9 +15,12 @@ type Handler interface {
 }
 
 func MakeRoutes(engine *gin.RouterGroup, handler *handlers.Handler) {
-	engine.GET("movies", handler.ListMovies())
-	engine.GET("movies/:id", handler.ShowMovie())
-	engine.POST("movies", handler.CreateMovie())
-	engine.PATCH("movies/:id", handler.UpdateMovie())
-	engine.DELETE("movies/:id", handler.DeleteMovie())
+	movies := engine.Group("movies")
+	{
+		movies.GET("", handler.ListMovies())
+		movies.GET("/:id", handler.ShowMovie())
+		movies.POST("", handler.CreateMovie())
+		movies.PATCH("/:id", handler.UpdateMovie())
+		movies.DELETE("/:id", handler.DeleteMovie())
+	}
 }
