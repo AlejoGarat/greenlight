@@ -28,6 +28,7 @@ type UserRepo interface {
 	Insert(ctx context.Context, user models.User) (models.User, error)
 	GetByEmail(ctx context.Context, email string) (models.User, error)
 	Update(ctx context.Context, user models.User) (models.User, error)
+	GetForToken(ctx context.Context, tokenScope string, tokenPlaintext string) (models.User, error)
 }
 
 func NewUserService(repo UserRepo, tokensRepo TokensRepo, logger *jsonlog.Logger, mailer mailer.Mailer) *userService {
@@ -92,6 +93,20 @@ func (s userService) UpdateUser(ctx context.Context, user models.User) (models.U
 		switch {
 		case errors.Is(err, repoerrors.ErrRecordNotFound):
 			return models.User{}, serviceerrors.ErrNoUserFound
+		default:
+			return models.User{}, err
+		}
+	}
+
+	return user, nil
+}
+
+func (s userService) GetForToken(ctx context.Context, tokenScope string, tokenPlaintext string) (models.User, error) {
+	user, err := s.repo.GetForToken(ctx, tokenScope, tokenPlaintext)
+	if err != nil {
+		switch {
+		case errors.Is(err, repoerrors.ErrNoRows):
+			return models.User{}, serviceerrors.ErrNoTokenFound
 		default:
 			return models.User{}, err
 		}

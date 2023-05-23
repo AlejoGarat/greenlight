@@ -103,7 +103,7 @@ func main() {
 		MovieService: ms,
 	}
 
-	ur := usersRepo.NewMovieRepo(db)
+	ur := usersRepo.NewUserRepo(db)
 	tr := usersRepo.New(db)
 	mailer := mailer.New(cfg.smtp.host, cfg.smtp.port, cfg.smtp.username, cfg.smtp.password, cfg.smtp.sender)
 	us := usersService.NewUserService(ur,
@@ -111,11 +111,17 @@ func main() {
 		logger,
 		mailer)
 
+	ts := usersService.NewTokensService(
+		tr,
+		logger,
+	)
+
 	usersHandler := &usersHandler.Handler{
-		Logger:      logger,
-		Version:     version,
-		Env:         "development",
-		UserService: us,
+		Logger:       logger,
+		Version:      version,
+		Env:          "development",
+		UserService:  us,
+		TokenService: ts,
 	}
 
 	r.Use(middlewares.RecoverPanic())

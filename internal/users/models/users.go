@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql/driver"
 	"errors"
 	"time"
 
@@ -14,14 +15,30 @@ type User struct {
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 	Name      string    `json:"name" db:"name"`
 	Email     string    `json:"email" db:"email"`
-	Password  Password  `json:"-" db:"password"`
+	Password  Password  `json:"-" db:"password_hash"`
 	Activated bool      `json:"activated" db:"activated"`
 	Version   int       `json:"-" db:"version"`
 }
 
 type Password struct {
-	Plaintext *string
-	Hash      []byte
+	Plaintext *string `json:"plain_text"`
+	Hash      []byte  `json:"hash"`
+}
+
+func (p Password) Value() (driver.Value, error) {
+	return p.Hash, nil
+}
+
+func (p *Password) Scan(value interface{}) error {
+	switch v := value.(type) {
+	case []byte:
+		p.Hash = v
+	case string:
+		p.Hash = []byte(v)
+	default:
+		return errors.New("incompatible type for Password")
+	}
+	return nil
 }
 
 func (p *Password) Set(plaintextPassword string) error {
