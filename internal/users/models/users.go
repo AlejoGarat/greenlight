@@ -10,6 +10,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+var AnonymousUser = User{}
+
 type User struct {
 	ID        int64     `json:"id" db:"id"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
@@ -23,6 +25,10 @@ type User struct {
 type Password struct {
 	Plaintext *string `json:"plain_text"`
 	Hash      []byte  `json:"hash"`
+}
+
+func (u User) IsAnonymous() bool {
+	return u.Email == ""
 }
 
 func (p Password) Value() (driver.Value, error) {

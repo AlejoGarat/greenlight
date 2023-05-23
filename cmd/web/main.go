@@ -134,6 +134,7 @@ func main() {
 
 	r.Use(middlewares.RecoverPanic())
 	r.Use(middlewares.RateLimit(cfg.limiter.enabled))
+	r.Use(middlewares.Authenticate(ur))
 	v1 := r.Group("/v1")
 	{
 		healthcheckRoutes.MakeRoutes(v1, healthcheckHandler)
