@@ -18,6 +18,7 @@ import (
 	moviesRoutes "greenlight/internal/movies/routes"
 	moviesService "greenlight/internal/movies/service"
 	permissionsRepo "greenlight/internal/permissions/repository"
+	permissionsService "greenlight/internal/permissions/service"
 	utHandler "greenlight/internal/users/handlers"
 	usersRepo "greenlight/internal/users/repo"
 	userRoutes "greenlight/internal/users/routes"
@@ -106,11 +107,14 @@ func main() {
 
 	ur := usersRepo.NewUserRepo(db)
 	tr := usersRepo.New(db)
+	pr := permissionsRepo.NewPermissionsRepo(db)
+	ps := permissionsService.NewPermissionsService(pr, logger)
 	mailer := mailer.New(cfg.smtp.host, cfg.smtp.port, cfg.smtp.username, cfg.smtp.password, cfg.smtp.sender)
 	us := usersService.NewUserService(ur,
 		tr,
 		logger,
-		mailer)
+		mailer,
+		ps)
 
 	ts := usersService.NewTokensService(
 		tr,
@@ -132,8 +136,6 @@ func main() {
 		TokenService: ts,
 		UserService:  us,
 	}
-
-	pr := permissionsRepo.NewPermissionsRepo(db)
 
 	engine.Use(
 		middlewares.RecoverPanic(),

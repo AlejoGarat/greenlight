@@ -7,6 +7,7 @@ import (
 	"greenlight/internal/permissions/models"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 type permissionRepo struct {
@@ -27,7 +28,7 @@ func (r permissionRepo) GetAllForUser(ctx context.Context, userID int64) (models
         INNER JOIN users ON users_permissions.user_id = users.id
         WHERE users.id = $1`
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
 	rows, err := r.DB.QueryContext(ctx, query, userID)
@@ -53,4 +54,16 @@ func (r permissionRepo) GetAllForUser(ctx context.Context, userID int64) (models
 	}
 
 	return permissions, nil
+}
+
+func (r permissionRepo) AddForUser(ctx context.Context, userID int64, codes ...string) error {
+	query := `
+        INSERT INTO users_permissions
+        SELECT $1, permissions.id FROM permissions WHERE permissions.code = ANY($2)`
+
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	_, err := r.DB.ExecContext(ctx, query, userID, pq.Array(codes))
+	return err
 }
