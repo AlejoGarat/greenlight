@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"time"
 
 	"greenlight/internal/users/models"
 	"greenlight/internal/users/serviceerrors"
@@ -30,6 +31,7 @@ type UserService interface {
 }
 
 type TokenService interface {
+	Insert(ctx context.Context, userID int64, ttl time.Duration, scope string) (models.Token, error)
 	DeleteAllForUser(ctx context.Context, scope string, userID int64) error
 }
 

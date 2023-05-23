@@ -12,8 +12,11 @@ type Handler interface {
 	UpdateUser() func(c *gin.Context)
 	ActivateUser() func(c *gin.Context)
 }
+type THandler interface {
+	CreateAuthToken() func(c *gin.Context)
+}
 
-func MakeRoutes(engine *gin.RouterGroup, handler *handlers.Handler) {
+func MakeRoutes(engine *gin.RouterGroup, handler *handlers.Handler, thandler *handlers.TokenHandler) {
 	users := engine.Group("/users")
 	{
 		users.POST("", handler.AddUser())
@@ -21,4 +24,6 @@ func MakeRoutes(engine *gin.RouterGroup, handler *handlers.Handler) {
 		users.PUT("/activated", handler.ActivateUser())
 		users.GET("/:email", handler.GetUserByEmail())
 	}
+	tokens := engine.Group("/tokens")
+	tokens.POST("/authentication", thandler.CreateAuthToken())
 }

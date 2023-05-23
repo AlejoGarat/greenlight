@@ -63,11 +63,11 @@ func (r userRepo) GetByEmail(ctx context.Context, email string) (models.User, er
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
-	err := r.DB.GetContext(ctx, &user, query)
+	err := r.DB.GetContext(ctx, &user, query, user.Email)
 	if err != nil {
 		switch {
-		case errors.Is(err, repoerrors.ErrNoRows):
-			return models.User{}, repoerrors.ErrRecordNotFound
+		case errors.Is(err, sql.ErrNoRows):
+			return models.User{}, repoerrors.ErrNoRows
 		default:
 			return models.User{}, err
 		}

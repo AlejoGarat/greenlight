@@ -75,7 +75,7 @@ func (s userService) GetUserByEmail(ctx context.Context, email string) (models.U
 	user, err := s.repo.GetByEmail(ctx, email)
 	if err != nil {
 		switch {
-		case errors.Is(err, repoerrors.ErrRecordNotFound):
+		case errors.Is(err, repoerrors.ErrNoRows):
 			return models.User{}, serviceerrors.ErrNoUserFound
 
 		default:

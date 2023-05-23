@@ -17,7 +17,7 @@ import (
 	moviesRepo "greenlight/internal/movies/repository"
 	moviesRoutes "greenlight/internal/movies/routes"
 	moviesService "greenlight/internal/movies/service"
-	usersHandler "greenlight/internal/users/handlers"
+	utHandler "greenlight/internal/users/handlers"
 	usersRepo "greenlight/internal/users/repo"
 	userRoutes "greenlight/internal/users/routes"
 	usersService "greenlight/internal/users/service"
@@ -116,12 +116,20 @@ func main() {
 		logger,
 	)
 
-	usersHandler := &usersHandler.Handler{
+	usersHandler := &utHandler.Handler{
 		Logger:       logger,
 		Version:      version,
 		Env:          "development",
 		UserService:  us,
 		TokenService: ts,
+	}
+
+	tokensHandler := &utHandler.TokenHandler{
+		Logger:       logger,
+		Version:      version,
+		Env:          "development",
+		TokenService: ts,
+		UserService:  us,
 	}
 
 	r.Use(middlewares.RecoverPanic())
@@ -130,7 +138,7 @@ func main() {
 	{
 		healthcheckRoutes.MakeRoutes(v1, healthcheckHandler)
 		moviesRoutes.MakeRoutes(v1, moviesHandler)
-		userRoutes.MakeRoutes(v1, usersHandler)
+		userRoutes.MakeRoutes(v1, usersHandler, tokensHandler)
 	}
 
 	info := info{
