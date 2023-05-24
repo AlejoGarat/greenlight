@@ -147,8 +147,9 @@ func main() {
 
 	engine.Use(
 		middlewares.RecoverPanic(),
-		middlewares.RateLimit(cfg.limiter.enabled),
-		middlewares.EnableCors(),
+		// middlewares.RateLimit(cfg.limiter.enabled),
+		middlewares.EnableCors("http://localhost:9000"),
+		// middlewares.EnableCors(cfg.cors.trustedOrigins...),
 		middlewares.Authenticate(ur),
 		middlewares.RequirePermission(pr, "movies:read"),
 	)
