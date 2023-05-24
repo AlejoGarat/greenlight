@@ -30,6 +30,7 @@ import (
 	"greenlight/pkg/httphelpers"
 	"greenlight/pkg/jsonlog"
 	"greenlight/pkg/mailer"
+	"greenlight/pkg/middlewares"
 	"greenlight/pkg/taskutils"
 )
 
@@ -148,12 +149,13 @@ func main() {
 	}
 
 	engine.Use(
-	// middlewares.RecoverPanic(),
-	// middlewares.RateLimit(cfg.limiter.enabled),
-	// middlewares.EnableCors("http://localhost:9000"),
-	// middlewares.EnableCors(cfg.cors.trustedOrigins...),
-	// middlewares.Authenticate(ur),
-	// middlewares.RequirePermission(pr, "movies:read"),
+		// middlewares.RecoverPanic(),
+		// middlewares.RateLimit(cfg.limiter.enabled),
+		// middlewares.EnableCors("http://localhost:9000"),
+		// middlewares.EnableCors(cfg.cors.trustedOrigins...),
+		// middlewares.Authenticate(ur),
+		// middlewares.RequirePermission(pr, "movies:read"),
+		middlewares.Metrics(),
 	)
 	v1 := engine.Group("/v1")
 	{
