@@ -5,7 +5,7 @@ tmp_dir = "tmp"
 [build]
   args_bin = []
   bin = "./tmp/main"
-  cmd = "go build -o ./tmp/main ./cmd/web cors-trusted-origins=http://localhost:9000 http://localhost:9001"
+  cmd = "go build -o ./tmp/main ./cmd/web"
   delay = 0
   exclude_dir = ["assets", "tmp", "vendor", "testdata"]
   exclude_file = []

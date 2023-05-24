@@ -14,6 +14,7 @@ import (
 
 	healthcheckHandler "greenlight/internal/healthcheck/handlers"
 	healthcheckRoutes "greenlight/internal/healthcheck/routes"
+	metricsRoutes "greenlight/internal/metrics/routes"
 	moviesHandler "greenlight/internal/movies/handlers"
 	moviesRepo "greenlight/internal/movies/repository"
 	moviesRoutes "greenlight/internal/movies/routes"
@@ -27,7 +28,6 @@ import (
 	"greenlight/pkg/httphelpers"
 	"greenlight/pkg/jsonlog"
 	"greenlight/pkg/mailer"
-	"greenlight/pkg/middlewares"
 	"greenlight/pkg/taskutils"
 )
 
@@ -146,18 +146,20 @@ func main() {
 	}
 
 	engine.Use(
-		middlewares.RecoverPanic(),
-		// middlewares.RateLimit(cfg.limiter.enabled),
-		middlewares.EnableCors("http://localhost:9000"),
-		// middlewares.EnableCors(cfg.cors.trustedOrigins...),
-		middlewares.Authenticate(ur),
-		middlewares.RequirePermission(pr, "movies:read"),
+	// middlewares.RecoverPanic(),
+	// middlewares.RateLimit(cfg.limiter.enabled),
+	// middlewares.EnableCors("http://localhost:9000"),
+	// middlewares.EnableCors(cfg.cors.trustedOrigins...),
+	// middlewares.Authenticate(ur),
+	// middlewares.RequirePermission(pr, "movies:read"),
 	)
 	v1 := engine.Group("/v1")
 	{
+
 		healthcheckRoutes.MakeRoutes(v1, healthcheckHandler)
 		moviesRoutes.MakeRoutes(v1, moviesHandler)
 		userRoutes.MakeRoutes(v1, usersHandler, tokensHandler)
+		metricsRoutes.MakeRoutes(v1)
 	}
 
 	info := info{
