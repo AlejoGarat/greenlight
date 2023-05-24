@@ -12,20 +12,18 @@ type LogFunc func(v any)
 
 var Logger *jsonlog.Logger
 
-var (
-	logFunc LogFunc
-	wg      = sync.WaitGroup{}
-)
+// logFunc LogFunc
+var wg = sync.WaitGroup{}
 
 func init() {
-	logFunc = func(v any) { log.Default().Print(v) }
+	// logFunc = func(v any) { log.Default().Print(v) }
 }
 
 // Set the function to use for logging on panic recovery
 //
 // By default, it uses log.Default().Print to log the panic
 func SetLogger(f LogFunc) {
-	logFunc = f
+	// logFunc = f
 }
 
 // Setup Background task with with recover, and assures graceful exit on program exit
