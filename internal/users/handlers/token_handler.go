@@ -49,7 +49,7 @@ func (h *TokenHandler) CreateAuthToken() func(c *gin.Context) {
 		if err != nil {
 			switch {
 			case errors.Is(err, serviceerrors.ErrUserNotFound):
-				httphelpers.StatusUnauthorizedResponse(c)
+				httphelpers.StatusNotFoundResponse(c)
 			default:
 				httphelpers.StatusInternalServerErrorResponse(c, err)
 			}
