@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"greenlight/internal/movies/repoerrors"
@@ -58,7 +59,7 @@ func (r permissionRepo) AddForUser(ctx context.Context, userID int64, codes ...s
 	_, err := r.DB.ExecContext(ctx, query, userID, pq.Array(codes))
 	if err != nil {
 		switch {
-		case err.Error() == `pq: insert or update on table "users_permissions" violates foreign key constraint "users_permissions_user_id_fkey"`:
+		case strings.Contains(err.Error(), `foreign key constraint "users_permissions_user_id_fkey"`):
 			return repoerrors.ErrUserPermissionsForeignKey
 		default:
 			return err

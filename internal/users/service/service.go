@@ -36,7 +36,9 @@ type PermissionsService interface {
 	AddForUser(ctx context.Context, userID int64, codes ...string) error
 }
 
-func NewUserService(repo UserRepo, tokensRepo TokensRepo, logger *jsonlog.Logger, mailer mailer.Mailer, permissionsService PermissionsService) *userService {
+func NewUserService(repo UserRepo, tokensRepo TokensRepo,
+	logger *jsonlog.Logger, mailer mailer.Mailer, permissionsService PermissionsService,
+) *userService {
 	return &userService{
 		repo:               repo,
 		tokensRepo:         tokensRepo,

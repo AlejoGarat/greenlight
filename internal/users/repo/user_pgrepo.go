@@ -43,7 +43,7 @@ func (r userRepo) Insert(ctx context.Context, user models.User) (models.User, er
 	err := r.DB.GetContext(ctx, &user, query, args...)
 	if err != nil {
 		switch {
-		case err.Error() == "pq: duplicate key value violates unique constraint \"users_email_key\"":
+		case strings.Contains(err.Error(), `unique constraint "users_email_key"`):
 			return models.User{}, repoerrors.ErrDuplicateEmail
 		case strings.Contains(err.Error(), `null value in column "email"`):
 			return models.User{}, repoerrors.ErrEmailRequired
@@ -123,13 +123,13 @@ func (r userRepo) GetForToken(ctx context.Context, tokenScope string, tokenPlain
 	tokenHash := sha256.Sum256([]byte(tokenPlaintext))
 
 	query := `
-        SELECT users.id, users.created_at, users.name, users.email, users.password_hash, users.activated, users.version
-        FROM users
-        INNER JOIN tokens
-        ON users.id = tokens.user_id
-        WHERE tokens.hash = $1
-        AND tokens.scope = $2 
-        AND tokens.expiry > $3`
+        SELECT u.id, u.created_at, u.name, u.email, u.password_hash, u.activated, u.version
+        FROM users AS u
+        INNER JOIN tokens as t
+        ON u.id = t.user_id
+        WHERE t.hash = $1
+        AND t.scope = $2 
+        AND t.expiry > $3`
 
 	args := []any{tokenHash[:], tokenScope, time.Now()}
 

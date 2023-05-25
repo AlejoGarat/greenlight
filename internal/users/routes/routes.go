@@ -24,6 +24,9 @@ func MakeRoutes(engine *gin.RouterGroup, handler *handlers.Handler, thandler *ha
 		users.PUT("/activated", handler.ActivateUser())
 		users.GET("/:email", handler.GetUserByEmail())
 	}
+
 	tokens := engine.Group("/tokens")
-	tokens.POST("/authentication", thandler.CreateAuthToken())
+	{
+		tokens.POST("/authentication", thandler.CreateAuthToken())
+	}
 }

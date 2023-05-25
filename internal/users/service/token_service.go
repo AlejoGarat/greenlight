@@ -36,7 +36,9 @@ func (s *tokenService) DeleteAllForUser(ctx context.Context, scope string, userI
 	return nil
 }
 
-func (s *tokenService) Insert(ctx context.Context, userID int64, ttl time.Duration, scope string) (models.Token, error) {
+func (s *tokenService) Insert(ctx context.Context, userID int64, ttl time.Duration,
+	scope string,
+) (models.Token, error) {
 	token, err := s.repo.Insert(ctx, userID, ttl, scope)
 	if err != nil {
 		switch {

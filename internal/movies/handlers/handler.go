@@ -24,7 +24,9 @@ type Handler struct {
 	Version      string
 	Env          string
 	MovieService MovieService
+	_            struct{}
 }
+
 type createMovieInput struct {
 	Title   string               `json:"title"`
 	Year    int32                `json:"year"`
@@ -96,7 +98,7 @@ func (h *Handler) CreateMovie() func(c *gin.Context) {
 		headers := make(http.Header)
 		headers.Set("Location", fmt.Sprintf("/v1/movies/%d", movie.ID))
 
-		err = httphelpers.WriteJSON(c, http.StatusCreated, gin.H{"movie": movie}, headers)
+		err = httphelpers.WriteJSON(c, http.StatusCreated, map[string]any{"movie": movie}, headers)
 		if err != nil {
 			httphelpers.StatusInternalServerErrorResponse(c, err)
 		}

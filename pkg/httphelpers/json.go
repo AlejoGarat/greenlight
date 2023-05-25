@@ -43,7 +43,7 @@ func jsonDecode(c *gin.Context, v any, allowUnknownFields bool) error {
 	return nil
 }
 
-func WriteJSON(c *gin.Context, status int, data gin.H, headers http.Header) error {
+func WriteJSON(c *gin.Context, status int, data any, headers http.Header) error {
 	js, err := json.MarshalIndent(data, "", "\t")
 	if err != nil {
 		return err

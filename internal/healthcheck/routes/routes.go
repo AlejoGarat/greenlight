@@ -11,5 +11,5 @@ type Handler interface {
 }
 
 func MakeRoutes(engine *gin.RouterGroup, handler *handlers.Handler) {
-	engine.GET("healthcheck", handler.Healthcheck)
+	engine.GET("healthcheck", handler.Healthcheck())
 }

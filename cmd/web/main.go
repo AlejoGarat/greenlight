@@ -114,6 +114,9 @@ func main() {
 		Logger:  logger,
 		Version: version,
 		Env:     "development",
+		DBStatus: func(ctx context.Context) error {
+			return db.PingContext(ctx)
+		},
 	}
 
 	mr := moviesRepo.NewMovieRepo(db)

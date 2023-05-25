@@ -16,7 +16,8 @@ type movieService struct {
 type MovieRepo interface {
 	Insert(ctx context.Context, movie models.Movie) (models.Movie, error)
 	Get(ctx context.Context, id int64) (models.Movie, error)
-	GetAll(ctx context.Context, title string, genres []string, filters commonmodels.Filters) ([]models.Movie, commonmodels.Metadata, error)
+	GetAll(ctx context.Context, title string, genres []string, filters commonmodels.Filters,
+	) ([]models.Movie, commonmodels.Metadata, error)
 	Update(ctx context.Context, movie models.Movie) (models.Movie, error)
 	Delete(ctx context.Context, id int64) error
 }
@@ -57,7 +58,8 @@ func (m movieService) GetMovie(ctx context.Context, id int64) (models.Movie, err
 	return movie, nil
 }
 
-func (m movieService) GetMovies(ctx context.Context, title string, genres []string, filters commonmodels.Filters) ([]models.Movie, commonmodels.Metadata, error) {
+func (m movieService) GetMovies(ctx context.Context, title string, genres []string, filters commonmodels.Filters,
+) ([]models.Movie, commonmodels.Metadata, error) {
 	movies, metadata, err := m.repo.GetAll(ctx, title, genres, filters)
 	if err != nil {
 		switch {
