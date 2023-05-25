@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"greenlight/internal/movies/repoerrors"
 	"greenlight/internal/permissions/models"
 
 	"github.com/jmoiron/sqlx"
@@ -31,31 +32,21 @@ func (r permissionRepo) GetAllForUser(ctx context.Context, userID int64) (models
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
-	rows, err := r.DB.QueryContext(ctx, query, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
 	var permissions models.Permissions
 
-	for rows.Next() {
-		var permission string
-
-		err := rows.Scan(&permission)
-		if err != nil {
-			return nil, err
-		}
-
-		permissions = append(permissions, permission)
-	}
-	if err = rows.Err(); err != nil {
-		return nil, err
+	err := r.DB.SelectContext(ctx,
+		&permissions,
+		query,
+		userID,
+	)
+	if err != nil {
+		return permissions, err
 	}
 
 	return permissions, nil
 }
 
+/*VER ERRORRES*/
 func (r permissionRepo) AddForUser(ctx context.Context, userID int64, codes ...string) error {
 	query := `
         INSERT INTO users_permissions
@@ -65,5 +56,14 @@ func (r permissionRepo) AddForUser(ctx context.Context, userID int64, codes ...s
 	defer cancel()
 
 	_, err := r.DB.ExecContext(ctx, query, userID, pq.Array(codes))
+	if err != nil {
+		switch {
+		case err.Error() == `pq: insert or update on table "users_permissions" violates foreign key constraint "users_permissions_user_id_fkey"`:
+			return repoerrors.ErrUserPermissionsForeignKey
+		default:
+			return err
+		}
+	}
+
 	return err
 }

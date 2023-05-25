@@ -2,10 +2,10 @@ package middlewares
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"strings"
 
-	"greenlight/internal/movies/repoerrors"
 	"greenlight/internal/users/models"
 	"greenlight/pkg/httphelpers"
 	"greenlight/pkg/validator"
@@ -46,7 +46,7 @@ func Authenticate(userRepo UserRepo) gin.HandlerFunc {
 		user, err := userRepo.GetForToken(c, models.ScopeAuthentication, token)
 		if err != nil {
 			switch {
-			case errors.Is(err, repoerrors.ErrNoRows):
+			case errors.Is(err, sql.ErrNoRows):
 				httphelpers.StatusUnauthorizedResponse(c)
 			default:
 				httphelpers.StatusInternalServerErrorResponse(c, err)

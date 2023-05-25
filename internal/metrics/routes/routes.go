@@ -6,9 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type Handler interface {
-	// ShowMovie() func(c *gin.Context)
-}
+type Handler interface{}
 
 func MakeRoutes(engine *gin.RouterGroup) {
 	metrics := engine.Group("debug/vars")

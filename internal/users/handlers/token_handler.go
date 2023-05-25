@@ -48,7 +48,7 @@ func (h *TokenHandler) CreateAuthToken() func(c *gin.Context) {
 		user, err := h.UserService.GetUserByEmail(c, userInput.Email)
 		if err != nil {
 			switch {
-			case errors.Is(err, serviceerrors.ErrNoUserFound):
+			case errors.Is(err, serviceerrors.ErrUserNotFound):
 				httphelpers.StatusUnauthorizedResponse(c)
 			default:
 				httphelpers.StatusInternalServerErrorResponse(c, err)

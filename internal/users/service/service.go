@@ -51,9 +51,14 @@ func (s userService) AddUser(ctx context.Context, user models.User) (models.User
 	if err != nil {
 		switch {
 		case errors.Is(err, repoerrors.ErrDuplicateEmail):
-			return models.User{}, serviceerrors.ErrDuplicatedEmail
+			return models.User{}, serviceerrors.ErrDuplicateEmail
+		case errors.Is(err, repoerrors.ErrEmailRequired):
+			return models.User{}, serviceerrors.ErrEmailRequired
+		case errors.Is(err, repoerrors.ErrPswRequired):
+			return models.User{}, serviceerrors.ErrPswRequired
+		default:
+			return models.User{}, err
 		}
-		return models.User{}, err
 	}
 
 	token, err := s.tokensRepo.Insert(ctx, user.ID, 3*24*time.Hour, models.ScopeActivation)
@@ -86,8 +91,8 @@ func (s userService) GetUserByEmail(ctx context.Context, email string) (models.U
 	user, err := s.repo.GetByEmail(ctx, email)
 	if err != nil {
 		switch {
-		case errors.Is(err, repoerrors.ErrNoRows):
-			return models.User{}, serviceerrors.ErrNoUserFound
+		case errors.Is(err, repoerrors.ErrUserNotFound):
+			return models.User{}, serviceerrors.ErrUserNotFound
 
 		default:
 			return models.User{}, err
@@ -102,8 +107,12 @@ func (s userService) UpdateUser(ctx context.Context, user models.User) (models.U
 	user, err := s.repo.Update(ctx, user)
 	if err != nil {
 		switch {
-		case errors.Is(err, repoerrors.ErrRecordNotFound):
-			return models.User{}, serviceerrors.ErrNoUserFound
+		case errors.Is(err, repoerrors.ErrUserNotFound):
+			return models.User{}, serviceerrors.ErrUserNotFound
+		case errors.Is(err, repoerrors.ErrEmailRequired):
+			return models.User{}, serviceerrors.ErrEmailRequired
+		case errors.Is(err, repoerrors.ErrPswRequired):
+			return models.User{}, serviceerrors.ErrPswRequired
 		default:
 			return models.User{}, err
 		}
@@ -116,8 +125,8 @@ func (s userService) GetForToken(ctx context.Context, tokenScope string, tokenPl
 	user, err := s.repo.GetForToken(ctx, tokenScope, tokenPlaintext)
 	if err != nil {
 		switch {
-		case errors.Is(err, repoerrors.ErrNoRows):
-			return models.User{}, serviceerrors.ErrNoTokenFound
+		case errors.Is(err, repoerrors.ErrUserNotFound):
+			return models.User{}, serviceerrors.ErrUserNotFound
 		default:
 			return models.User{}, err
 		}

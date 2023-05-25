@@ -2,9 +2,12 @@ package service
 
 import (
 	"context"
+	"errors"
 
 	commonmodels "greenlight/internal/models"
 	"greenlight/internal/movies/models"
+	"greenlight/internal/movies/repoerrors"
+	"greenlight/internal/movies/serviceerrors"
 )
 
 type movieService struct {
@@ -27,7 +30,14 @@ func NewMovieService(repo MovieRepo) *movieService {
 func (m movieService) AddMovie(ctx context.Context, movie models.Movie) (models.Movie, error) {
 	movie, err := m.repo.Insert(ctx, movie)
 	if err != nil {
-		return models.Movie{}, err
+		switch {
+		case errors.Is(err, repoerrors.ErrMovieTitleRequired):
+			return models.Movie{}, serviceerrors.ErrMovieTitleRequired
+		case errors.Is(err, repoerrors.ErrMovieYearRequired):
+			return models.Movie{}, serviceerrors.ErrMovieYearRequired
+		default:
+			return models.Movie{}, err
+		}
 	}
 
 	return movie, nil
@@ -36,7 +46,12 @@ func (m movieService) AddMovie(ctx context.Context, movie models.Movie) (models.
 func (m movieService) GetMovie(ctx context.Context, id int64) (models.Movie, error) {
 	movie, err := m.repo.Get(ctx, id)
 	if err != nil {
-		return models.Movie{}, err
+		switch {
+		case errors.Is(err, repoerrors.ErrMovieNoFound):
+			return models.Movie{}, serviceerrors.ErrNoMovieFound
+		default:
+			return models.Movie{}, err
+		}
 	}
 
 	return movie, nil
@@ -45,7 +60,12 @@ func (m movieService) GetMovie(ctx context.Context, id int64) (models.Movie, err
 func (m movieService) GetMovies(ctx context.Context, title string, genres []string, filters commonmodels.Filters) ([]models.Movie, commonmodels.Metadata, error) {
 	movies, metadata, err := m.repo.GetAll(ctx, title, genres, filters)
 	if err != nil {
-		return []models.Movie{}, commonmodels.Metadata{}, err
+		switch {
+		case errors.Is(err, repoerrors.ErrMovieNoFound):
+			return []models.Movie{}, commonmodels.Metadata{}, serviceerrors.ErrNoMovieFound
+		default:
+			return []models.Movie{}, commonmodels.Metadata{}, err
+		}
 	}
 
 	return movies, metadata, nil
@@ -54,7 +74,16 @@ func (m movieService) GetMovies(ctx context.Context, title string, genres []stri
 func (m movieService) UpdateMovie(ctx context.Context, movie models.Movie) (models.Movie, error) {
 	movie, err := m.repo.Update(ctx, movie)
 	if err != nil {
-		return models.Movie{}, err
+		switch {
+		case errors.Is(err, repoerrors.ErrMovieNoFound):
+			return models.Movie{}, serviceerrors.ErrNoMovieFound
+		case errors.Is(err, repoerrors.ErrMovieTitleRequired):
+			return models.Movie{}, serviceerrors.ErrMovieTitleRequired
+		case errors.Is(err, repoerrors.ErrMovieYearRequired):
+			return models.Movie{}, serviceerrors.ErrMovieYearRequired
+		default:
+			return models.Movie{}, err
+		}
 	}
 
 	return movie, nil
@@ -63,7 +92,12 @@ func (m movieService) UpdateMovie(ctx context.Context, movie models.Movie) (mode
 func (m movieService) DeleteMovie(ctx context.Context, id int64) error {
 	err := m.repo.Delete(ctx, id)
 	if err != nil {
-		return err
+		switch {
+		case errors.Is(err, repoerrors.ErrMovieNoFound):
+			return serviceerrors.ErrNoMovieFound
+		default:
+			return err
+		}
 	}
 
 	return nil

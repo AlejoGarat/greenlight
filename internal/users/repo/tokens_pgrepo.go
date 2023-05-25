@@ -2,9 +2,11 @@ package repo
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	models "greenlight/internal/users/models"
+	"greenlight/internal/users/repoerrors"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -36,6 +38,10 @@ func (r tokenRepo) Insert(ctx context.Context, userID int64, ttl time.Duration, 
 
 	_, err = r.DB.ExecContext(ctx, query, args...)
 	if err != nil {
+		switch {
+		case strings.Contains(err.Error(), `null value in column "user_id"`):
+			return models.Token{}, repoerrors.ErrUserNotFound
+		}
 		return models.Token{}, err
 	}
 	return token, nil
@@ -50,5 +56,14 @@ func (r tokenRepo) DeleteAllForUser(ctx context.Context, scope string, userID in
 	defer cancel()
 
 	_, err := r.DB.ExecContext(ctx, query, scope, userID)
+	if err != nil {
+		switch {
+		case strings.Contains(err.Error(), `null value in column "user_id"`):
+			return repoerrors.ErrUserIdRequired
+		default:
+			return err
+		}
+	}
+
 	return err
 }

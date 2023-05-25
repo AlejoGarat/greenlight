@@ -11,7 +11,7 @@ import (
 
 	commonmodels "greenlight/internal/models"
 	"greenlight/internal/movies/models"
-	"greenlight/internal/users/serviceerrors"
+	"greenlight/internal/movies/serviceerrors"
 	"greenlight/pkg/httphelpers"
 	"greenlight/pkg/jsonlog"
 	"greenlight/pkg/validator"
@@ -82,7 +82,14 @@ func (h *Handler) CreateMovie() func(c *gin.Context) {
 		ctx := c.Request.Context()
 		movie, err = h.MovieService.AddMovie(ctx, movie)
 		if err != nil {
-			httphelpers.StatusInternalServerErrorResponse(c, err)
+			switch {
+			case errors.Is(err, serviceerrors.ErrMovieTitleRequired):
+				httphelpers.StatusBadRequestResponse(c, err.Error())
+			case errors.Is(err, serviceerrors.ErrMovieYearRequired):
+				httphelpers.StatusBadRequestResponse(c, err.Error())
+			default:
+				httphelpers.StatusInternalServerErrorResponse(c, err)
+			}
 			return
 		}
 
@@ -124,7 +131,7 @@ func (h *Handler) ShowMovie() func(c *gin.Context) {
 		movie, err := h.MovieService.GetMovie(ctx, id)
 		if err != nil {
 			switch {
-			case errors.Is(err, serviceerrors.ErrNoUserFound):
+			case errors.Is(err, serviceerrors.ErrNoMovieFound):
 				httphelpers.StatusNotFoundResponse(c)
 			default:
 				httphelpers.StatusInternalServerErrorResponse(c, err)
@@ -151,8 +158,12 @@ func (h *Handler) UpdateMovie() func(c *gin.Context) {
 		movie, err := h.MovieService.GetMovie(ctx, id)
 		if err != nil {
 			switch {
-			case errors.Is(err, serviceerrors.ErrNoUserFound):
+			case errors.Is(err, serviceerrors.ErrNoMovieFound):
 				httphelpers.StatusNotFoundResponse(c)
+			case errors.Is(err, serviceerrors.ErrMovieTitleRequired):
+				httphelpers.StatusBadRequestResponse(c, err.Error())
+			case errors.Is(err, serviceerrors.ErrMovieYearRequired):
+				httphelpers.StatusBadRequestResponse(c, err.Error())
 			default:
 				httphelpers.StatusInternalServerErrorResponse(c, err)
 			}
@@ -166,21 +177,7 @@ func (h *Handler) UpdateMovie() func(c *gin.Context) {
 			return
 		}
 
-		if input.Title != nil {
-			movie.Title = *input.Title
-		}
-
-		if input.Year != nil {
-			movie.Year = *input.Year
-		}
-
-		if input.Runtime != nil {
-			movie.Runtime = *input.Runtime
-		}
-
-		if input.Genres != nil {
-			movie.Genres = input.Genres
-		}
+		validateInputs(movie, input)
 
 		v := validator.New()
 		valid := fieldsAreValid(c, v, movie)
@@ -208,6 +205,24 @@ func (h *Handler) UpdateMovie() func(c *gin.Context) {
 	}
 }
 
+func validateInputs(oldMovie models.Movie, newMovie updateMovieInput) {
+	if newMovie.Title != nil {
+		oldMovie.Title = *newMovie.Title
+	}
+
+	if newMovie.Year != nil {
+		oldMovie.Year = *newMovie.Year
+	}
+
+	if newMovie.Runtime != nil {
+		oldMovie.Runtime = *newMovie.Runtime
+	}
+
+	if newMovie.Genres != nil {
+		oldMovie.Genres = newMovie.Genres
+	}
+}
+
 func (h *Handler) DeleteMovie() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		id, err := httphelpers.ReadIDParam(c)
@@ -220,7 +235,7 @@ func (h *Handler) DeleteMovie() func(c *gin.Context) {
 		err = h.MovieService.DeleteMovie(ctx, id)
 		if err != nil {
 			switch {
-			case errors.Is(err, serviceerrors.ErrNoUserFound):
+			case errors.Is(err, serviceerrors.ErrNoMovieFound):
 				httphelpers.StatusNotFoundResponse(c)
 			default:
 				httphelpers.StatusInternalServerErrorResponse(c, err)

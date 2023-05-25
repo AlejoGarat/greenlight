@@ -2,11 +2,12 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"time"
 
-	"greenlight/internal/movies/repoerrors"
 	"greenlight/internal/users/models"
+	"greenlight/internal/users/repoerrors"
 	"greenlight/internal/users/serviceerrors"
 	"greenlight/pkg/jsonlog"
 )
@@ -27,8 +28,8 @@ func (s *tokenService) DeleteAllForUser(ctx context.Context, scope string, userI
 	err := s.repo.DeleteAllForUser(ctx, scope, userID)
 	if err != nil {
 		switch {
-		case errors.Is(err, repoerrors.ErrRecordNotFound):
-			return serviceerrors.ErrNoTokenFound
+		case errors.Is(err, repoerrors.ErrUserNotFound):
+			return serviceerrors.ErrUserNotFound
 		}
 		return err
 	}
@@ -39,8 +40,8 @@ func (s *tokenService) Insert(ctx context.Context, userID int64, ttl time.Durati
 	token, err := s.repo.Insert(ctx, userID, ttl, scope)
 	if err != nil {
 		switch {
-		case errors.Is(err, repoerrors.ErrNoRows):
-			return models.Token{}, serviceerrors.ErrNoUserFound
+		case errors.Is(err, sql.ErrNoRows):
+			return models.Token{}, serviceerrors.ErrUserNotFound
 		default:
 			return models.Token{}, err
 		}

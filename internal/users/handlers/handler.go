@@ -83,9 +83,13 @@ func (h *Handler) AddUser() func(c *gin.Context) {
 		user, err = h.UserService.AddUser(c, user)
 		if err != nil {
 			switch {
-			case errors.Is(err, serviceerrors.ErrDuplicatedEmail):
+			case errors.Is(err, serviceerrors.ErrDuplicateEmail):
 				v.AddError("email", "a user with this email address already exists")
 				httphelpers.StatusUnprocesableEntities(c, v.Errors)
+			case errors.Is(err, serviceerrors.ErrEmailRequired):
+				httphelpers.StatusBadRequestResponse(c, err.Error())
+			case errors.Is(err, serviceerrors.ErrPswRequired):
+				httphelpers.StatusBadRequestResponse(c, err.Error())
 			default:
 				httphelpers.StatusInternalServerErrorResponse(c, err)
 			}
@@ -125,7 +129,7 @@ func (h *Handler) ActivateUser() func(c *gin.Context) {
 		user, err := h.UserService.GetForToken(c, models.ScopeActivation, input.TokenPlaintext)
 		if err != nil {
 			switch {
-			case errors.Is(err, serviceerrors.ErrNoTokenFound):
+			case errors.Is(err, serviceerrors.ErrTokenNotFound):
 				v.AddError("token", "invalid or expired activation token")
 				httphelpers.StatusBadRequestJSONPayloadResponse(c, v.Errors)
 			default:

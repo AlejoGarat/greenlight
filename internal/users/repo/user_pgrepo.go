@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"errors"
+	"strings"
 	"time"
 
 	"greenlight/internal/users/models"
@@ -44,6 +45,10 @@ func (r userRepo) Insert(ctx context.Context, user models.User) (models.User, er
 		switch {
 		case err.Error() == "pq: duplicate key value violates unique constraint \"users_email_key\"":
 			return models.User{}, repoerrors.ErrDuplicateEmail
+		case strings.Contains(err.Error(), `null value in column "email"`):
+			return models.User{}, repoerrors.ErrEmailRequired
+		case strings.Contains(err.Error(), `null value in column "password_hash"`):
+			return models.User{}, repoerrors.ErrPswRequired
 		default:
 			return models.User{}, err
 		}
@@ -67,7 +72,7 @@ func (r userRepo) GetByEmail(ctx context.Context, email string) (models.User, er
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			return models.User{}, repoerrors.ErrNoRows
+			return models.User{}, repoerrors.ErrUserNotFound
 		default:
 			return models.User{}, err
 		}
@@ -98,10 +103,14 @@ func (r userRepo) Update(ctx context.Context, user models.User) (models.User, er
 	err := r.DB.GetContext(ctx, &user, query, args...)
 	if err != nil {
 		switch {
-		case err.Error() == "pq: duplicate key value violates unique constraint \"users_email_key\"":
+		case strings.Contains(err.Error(), `unique constraint "users_email_key"`):
 			return models.User{}, repoerrors.ErrDuplicateEmail
-		case errors.Is(err, repoerrors.ErrNoRows):
+		case errors.Is(err, sql.ErrNoRows):
 			return models.User{}, repoerrors.ErrEditConflict
+		case strings.Contains(err.Error(), `null value in column "email"`):
+			return models.User{}, repoerrors.ErrEmailRequired
+		case strings.Contains(err.Error(), `null value in column "password_hash"`):
+			return models.User{}, repoerrors.ErrPswRequired
 		default:
 			return models.User{}, err
 		}
@@ -133,7 +142,7 @@ func (r userRepo) GetForToken(ctx context.Context, tokenScope string, tokenPlain
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			return models.User{}, repoerrors.ErrNoRows
+			return models.User{}, repoerrors.ErrTokenNotFound
 		default:
 			return models.User{}, err
 		}

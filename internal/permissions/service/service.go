@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"greenlight/internal/movies/repoerrors"
 	"greenlight/internal/permissions/models"
+	"greenlight/internal/users/repoerrors"
 	"greenlight/internal/users/serviceerrors"
 	"greenlight/pkg/jsonlog"
 )
@@ -31,8 +31,8 @@ func (s permissionsService) AddForUser(ctx context.Context, userID int64, codes 
 	err := s.repo.AddForUser(ctx, userID)
 	if err != nil {
 		switch {
-		case errors.Is(err, repoerrors.ErrNoRows):
-			return serviceerrors.ErrNoUserFound
+		case errors.Is(err, repoerrors.ErrUserNotFound):
+			return serviceerrors.ErrUserNotFound
 		default:
 			return err
 		}

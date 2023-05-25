@@ -94,7 +94,7 @@ func ReadJSON(c *gin.Context, dst any) error {
 		case errors.As(err, &maxBytesError):
 			return fmt.Errorf("body must not be larger than %d bytes", maxBytesError.Limit)
 		case errors.As(err, &invalidUnmarshalError):
-			panic(err)
+			return fmt.Errorf("invalid argument")
 		default:
 			return err
 		}

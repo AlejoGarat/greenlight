@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	commonmodels "greenlight/internal/models"
@@ -38,6 +39,12 @@ func (r movieRepo) Insert(ctx context.Context, movie models.Movie) (models.Movie
 
 	err := r.DB.GetContext(ctx, &movie, query, args...)
 	if err != nil {
+		switch {
+		case strings.Contains(err.Error(), `null value in column "title`):
+			return models.Movie{}, repoerrors.ErrMovieTitleRequired
+		case strings.Contains(err.Error(), `null value in column "year`):
+			return models.Movie{}, repoerrors.ErrMovieYearRequired
+		}
 		return models.Movie{}, err
 	}
 	return movie, nil
@@ -45,7 +52,7 @@ func (r movieRepo) Insert(ctx context.Context, movie models.Movie) (models.Movie
 
 func (r movieRepo) Get(ctx context.Context, id int64) (models.Movie, error) {
 	if id < 1 {
-		return models.Movie{}, repoerrors.ErrRecordNotFound
+		return models.Movie{}, repoerrors.ErrMovieNoFound
 	}
 
 	query := `
@@ -61,8 +68,8 @@ func (r movieRepo) Get(ctx context.Context, id int64) (models.Movie, error) {
 	err := r.DB.GetContext(ctx, &movie, query, id)
 	if err != nil {
 		switch {
-		case errors.Is(err, repoerrors.ErrNoRows):
-			return models.Movie{}, repoerrors.ErrRecordNotFound
+		case errors.Is(err, sql.ErrNoRows):
+			return models.Movie{}, repoerrors.ErrMovieNoFound
 		default:
 			return models.Movie{}, err
 		}
@@ -179,7 +186,11 @@ func (r movieRepo) Update(ctx context.Context, movie models.Movie) (models.Movie
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			return models.Movie{}, repoerrors.ErrEditConflict
+			return models.Movie{}, repoerrors.ErrMovieNoFound
+		case strings.Contains(err.Error(), `null value in column "title`):
+			return models.Movie{}, repoerrors.ErrMovieTitleRequired
+		case strings.Contains(err.Error(), `null value in column "year`):
+			return models.Movie{}, repoerrors.ErrMovieYearRequired
 		default:
 			return models.Movie{}, err
 		}
@@ -190,7 +201,7 @@ func (r movieRepo) Update(ctx context.Context, movie models.Movie) (models.Movie
 
 func (r movieRepo) Delete(ctx context.Context, id int64) error {
 	if id < 1 {
-		return repoerrors.ErrRecordNotFound
+		return repoerrors.ErrInvalidId
 	}
 
 	query := `
@@ -210,7 +221,7 @@ func (r movieRepo) Delete(ctx context.Context, id int64) error {
 		return err
 	}
 	if rowsAffected == 0 {
-		return repoerrors.ErrRecordNotFound
+		return repoerrors.ErrMovieNoFound
 	}
 
 	return nil
